@@ -55,7 +55,7 @@ end module eosmod
      &                          ,mrvu=muvu,mrvv=muvv,mrvw=muvw
       real(8),dimension(mflx,in,jn,kn):: nflux1,nflux2,nflux3
       real(8),dimension(in,jn,kn):: grvsrc1,grvsrc2,grvsrc3
-      real(8),dimension(mflx,in,jn,kn):: adsrc
+      real(8),dimension(in,jn,kn):: adsrca
 
       end module fluxmod
 
@@ -306,8 +306,7 @@ end module eosmod
 
 !      integer,parameter:: mden=1,mrv1=2,mrv2=3,mrv3=4,meto=5 &
 ! (P_tt+P_pp) 
-         adsrc(:,i,j,k) = 0.0d0
-         adsrc(mrv1,i,j,k) = &
+         adsrca(i,j,k) = &
      &   2.0d0* p(i,j,k)     &
      & + d(i,j,k)*(v2(i,j,k)**2+v3(i,j,k)**2)
  
@@ -772,6 +771,19 @@ end module eosmod
       use fluxmod
       implicit none
       integer::i,j,k
+      real(8),dimension(in),save::as1,dv1i
+      logical,save:: is_inited
+      data is_inited / .false. /
+
+      if (.not. is_inited ) then
+         do i=is-1,ie+1 
+            as1(i)  =  x1a(i)**2
+            dv1i(i) = 3.0d0/(x1a(i+1)**3 - x1a(i)**3)
+         enddo
+         
+         is_inited = .true.
+      endif
+
 
       do k=ks,ke
       do j=js,je
@@ -779,35 +791,35 @@ end module eosmod
          
          d(i,j,k) = d(i,j,k)                       &
      & +dt*(                                       &
-     & +(- nflux1(mden,i+1,j,k)                    &
-     &   + nflux1(mden,i  ,j,k))/(x1a(i+1)-x1a(i)) &
+     & +(- nflux1(mden,i+1,j,k)*as1(i+1)           &
+     &   + nflux1(mden,i  ,j,k)*as1(i  ))*dv1i(i)  &
      &      )
 
          mv1(i,j,k) = mv1(i,j,k)                   &
      & +dt*(                                       &
      &      +  grvsrc1(i,j,k)                      &
-     & +(- nflux1(mrv1,i+1,j,k)                    &
-     &   + nflux1(mrv1,i  ,j,k))/(x1a(i+1)-x1a(i)) &
+     & +(- (nflux1(mrv1,i+1,j,k)-0.5d0*adsrca(i,j,k))*as1(i+1)           &
+     &   + (nflux1(mrv1,i  ,j,k)-0.5d0*adsrca(i,j,k))*as1(i  ))*dv1i(i)  &
      &      )
 
          mv2(i,j,k) = mv2(i,j,k)                   &    
      & +dt*(                                       &
      &      +  grvsrc2(i,j,k)                      &
-     & +(- nflux1(mrv2,i+1,j,k)                    &
-     &   + nflux1(mrv2,i  ,j,k))/(x1a(i+1)-x1a(i)) &
+     & +(- nflux1(mrv2,i+1,j,k)*as1(i+1)           &
+     &   + nflux1(mrv2,i  ,j,k)*as1(i  ))*dv1i(i)  &
      &      )
 
          mv3(i,j,k) = mv3(i,j,k)                   & 
      & +dt*(                                       &
      &      +  grvsrc3(i,j,k)                      &
-     & +(- nflux1(mrv3,i+1,j,k)                    &
-     &   + nflux1(mrv3,i  ,j,k))/(x1a(i+1)-x1a(i)) &
+     & +(- nflux1(mrv3,i+1,j,k)*as1(i+1)           &
+     &   + nflux1(mrv3,i  ,j,k)*as1(i  ))*dv1i(i)  &
      &      )
 
           et(i,j,k) = et(i,j,k)                    &
      & +dt*(                                       &
-     &  (- nflux1(meto,i+1,j,k)                    &
-     &   + nflux1(meto,i  ,j,k))/(x1a(i+1)-x1a(i)) &
+     &  (- nflux1(meto,i+1,j,k)*as1(i+1)           &
+     &   + nflux1(meto,i  ,j,k)*as1(i  ))*dv1i(i)  &
      &      )
       enddo
       enddo
