@@ -145,7 +145,7 @@ end module eosmod
       frac = 0.8d0
       rho1 = (10.0d0*Msolar)/(4.0*pi/3.0d0*dr**3)
       eexp = frac*(1.0d51)
-      pre1 = eexp/(4.0*pi/3.0d0*dr**3)/3.0d0  
+      pre1 = eexp/(4.0*pi/3.0d0*dr**3)*(gam-1.0d0)  
       vel1 = sqrt((1.0d0-frac)*eexp/(4.0*pi/3.0d0*dr**3)/rho1)
       write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
       write(6,*) "vel= ",vel1   ,"[cm/s]"
