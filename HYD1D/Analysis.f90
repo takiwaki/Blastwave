@@ -9,8 +9,9 @@ module fieldmod
     real(8),dimension(:),allocatable:: x1b,x2b
     real(8),dimension(:),allocatable:: x1a,x2a
     real(8),dimension(:,:,:),allocatable:: d,v1,v2,v3,p,gp
-    real(8),dimension(:,:,:),allocatable:: kin
-    real(8):: dx,dy
+    real(8):: dx
+    real(8):: gam,rho0,Eexp
+
 end module fieldmod
 
 program data_analysis
@@ -102,6 +103,7 @@ subroutine ReadData
 end subroutine ReadData
 
 subroutine Visualize1D
+  use unitsmod
   use fieldmod
   implicit none
   integer::i,j,k
@@ -122,15 +124,14 @@ subroutine Visualize1D
   filename = trim(dirname)//filename
   open(unit1D,file=filename,status='replace',form='formatted')
 
-  write(unit1D,'(1a,4(1x,E12.3))') "#",time
-  write(unit1D,'(1a,4(1x,a8))') "#","1:r    ","2:den ","3:pre ","4:vel "
+  write(unit1D,'(1a,4(1x,E12.3))') "#",time/year
+  write(unit1D,'(1a,4(1x,a8))') "#","1:r[pc] ","2:den[1/cm^3] ","3:pre[erg/cm^3] ","4:vel[km/s] "
   k=ks
   j=js
   do i=is,ie
-     write(unit1D,'(4(1x,E12.3))') x1b(i),d(i,j,k),p(i,j,k),v1(i,j,k)
+     write(unit1D,'(4(1x,E12.3))') x1b(i)/pc,d(i,j,k)/mu,p(i,j,k),v1(i,j,k)/1.0d5
   enddo
   close(unit1D)
-
 
   return
 end subroutine Visualize1D

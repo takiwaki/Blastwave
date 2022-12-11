@@ -23,7 +23,7 @@ time   = system(command)
 print "time= ".time
 
 
-set xlabel "Radius" offset 0,0
+set xlabel "Radius [pc]" offset 0,0
 
 
 ##########################
@@ -34,9 +34,40 @@ ofname = sprintf("figures/pre%05d.png",ifnum)
 set output ofname
 
 set label 1 time at screen 0.45, screen 0.845
+set ylabel "Pressure [erg/cm^3]" offset 0,0
 
 plot  \
   ifnames u ($1):3 w l lw 6 \
+
+
+##########################
+# density
+##########################_
+
+ofname = sprintf("figures/den%05d.png",ifnum)
+set output ofname
+
+set label 1 time at screen 0.45, screen 0.845
+set ylabel "Density [1/cm^3]" offset 0,0
+
+plot  \
+  ifnames u ($1):2 w l lw 6 \
+
+##########################
+# velocity
+##########################_
+
+ofname = sprintf("figures/vel%05d.png",ifnum)
+set output ofname
+
+set label 1 time at screen 0.45, screen 0.845
+set ylabel "velocity [km/s]" offset 0,0
+
+plot  \
+  ifnames u ($1):4 w l lw 6 \
+
+
+
 
 reset
 set term pop

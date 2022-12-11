@@ -1,11 +1,23 @@
+
+      module unitsmod
+      implicit none
+      real(8),parameter::  pc  = 3.085677581d18   ! parsec in [cm]
+      real(8),parameter::  mu  = 1.660539066d-24  ! g
+      real(8),parameter:: Msolar = 1.989e33       ! g
+      real(8),parameter:: kbol = 1.380649d-23     ! J/K
+      real(8),parameter:: year = 365.0d0*24*60*60 ! sec
+
+      end module unitsmod
+
       module commons
+      use unitsmod
       implicit none
       integer::nhy
-      integer,parameter::nhymax=10000
+      integer,parameter::nhymax=100000
       real(8)::time,dt
       real(8),parameter:: Coul=0.25d0
       data time / 0.0d0 /
-      real(8),parameter:: timemax=1.0d0
+      real(8),parameter:: timemax=1.0d5*year
       real(8),parameter:: dtout=timemax/500
 
       integer,parameter::izones=200
@@ -21,7 +33,8 @@
      &                  ,je=1 &
      &                  ,ke=1
 
-      real(8),parameter:: x1min=0.0d0,x1max=1.0d0
+
+      real(8),parameter:: x1min=0.0d0,x1max=1.0d2*pc
       real(8),dimension(in)::x1a,x1b
       real(8),dimension(jn)::x2a,x2b
       real(8),dimension(kn)::x3a,x3b
@@ -29,6 +42,8 @@
       real(8),dimension(in,jn,kn)::d,et,mv1,mv2,mv3
       real(8),dimension(in,jn,kn)::p,ei,v1,v2,v3,cs
       real(8),dimension(in,jn,kn)::gp,gp1a,gp2a
+
+
       end module commons
      
       module eosmod
@@ -62,16 +77,18 @@ end module eosmod
       program main
       use commons
       implicit none
+      integer,parameter:: nhyspan=1000
       write(6,*) "setup grids and fields"
       call GenerateGrid
       call GenerateProblem
       call ConsvVariable
       write(6,*) "entering main loop"
 ! main loop
-                                  write(6,*)"step","time","dt"
+                                  write(6,*)"step","time [yr]","dt [yr]"
       mloop: do nhy=1,nhymax
          call TimestepControl
-         if(mod(nhy,100) .eq. 0 ) write(6,*)nhy,time,dt
+!         if(mod(nhy,nhyspan) .eq. 0 ) write(6,*)nhy,time/year,dt/year
+         write(6,*)nhy,time/year,dt/year
          call BoundaryCondition
          call StateVector
          call NumericalFlux1
@@ -107,31 +124,37 @@ end module eosmod
       implicit none
       integer::i,j,k
       real(8),parameter:: neu = 3.0d0
-      real(8):: rho0,rho1,rho2
+      real(8):: rho1,rho2
       real(8):: ein0
       real(8):: pre1,pre2
       real(8):: vel1,vel2
       real(8):: dr
       real(8):: pi
+      real(8):: frac,eexp
 
       pi =acos(-1.0d0)
-      dr = 8.0d0*(x1a(is+1)-x1a(is))
+      dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
+      write(6,*) "shell length [pc]",dr/pc
 
-      rho0 = 1.0d0
-      rho2 = 1.0d0
-      rho1 = (gam+1)/(gam-1)*rho2
-      
-      ein0 =1.0d0
-      pre1 = 3.0*(gam-1)*ein0/(neu+1.0)/pi/dr**neu
-      pre2 = 5.0d-2
+! circum steller  medium
+      rho2 = 1.0d0*mu ! Intersteller medium 1 [1/cm^3]
+      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
       vel2 = 0.0d0
 
-      pre1 = 3.0d0*(gam+1)/(gam-1)*rho2
-      vel1 = (pre1/2.0d0*(gam+1)/rho2)**0.5d0*2.0d0/(gam+1)
-      
-      d(:,:,:) = 1.0d0 
-      k=ks
-      j=js
+! blast wave
+      frac = 0.8d0
+      rho1 = (10.0d0*Msolar)/(4.0*pi/3.0d0*dr**3)
+      eexp = frac*(1.0d51)
+      pre1 = eexp/(4.0*pi/3.0d0*dr**3)/3.0d0  
+      vel1 = sqrt((1.0d0-frac)*eexp/(4.0*pi/3.0d0*dr**3)/rho1)
+      write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
+      write(6,*) "vel= ",vel1   ,"[cm/s]"
+      write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
+     
+      d(:,:,:) = rho2
+  
+      do k=ks,ke
+      do j=js,je
       do i=is,ie
          if(x1b(i) < dr)then
              d(i,j,k) = max(rho1*(x1b(i)/dr)**(neu/(gam-1)),rho2)
@@ -142,6 +165,8 @@ end module eosmod
              p(i,j,k) = pre2
             v1(i,j,k) = vel2
          endif
+      enddo
+      enddo
       enddo
 
       do k=ks,ke
@@ -885,7 +910,7 @@ end module eosmod
       write(unitbin) hydout(:,:,:,:)
       close(unitbin)
 
-      write(6,*) "output:",nout,time
+      write(6,*) "output:",nout,time,dt
 
       nout=nout+1
       tout=time
