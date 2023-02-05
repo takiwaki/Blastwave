@@ -1,11 +1,11 @@
 
       module unitsmod
       implicit none
-      real(8),parameter::  pc  = 3.085677581d18   ! parsec in [cm]
-      real(8),parameter::  mu  = 1.660539066d-24  ! g
-      real(8),parameter:: Msolar = 1.989e33       ! g
-      real(8),parameter:: kbol = 1.380649d-23     ! J/K
-      real(8),parameter:: year = 365.0d0*24*60*60 ! sec
+      real(8),parameter::    pc  = 3.085677581d18   ! parsec in [cm]
+      real(8),parameter::    mu  = 1.660539066d-24  ! g
+      real(8),parameter:: Msolar = 1.989e33         ! g
+      real(8),parameter::   kbol = 1.380649d-23     ! J/K
+      real(8),parameter::   year = 365.0d0*24*60*60 ! sec
 
       end module unitsmod
 
