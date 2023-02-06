@@ -25,11 +25,13 @@ input= "t-prof.dat"
 outputfile= "t-E.png"
 if(pngflag==1)set output outputfile
 
-set xlabel "Time"
+set xlabel "Time [year]"
 set log x
 
+set ylabel "Explosion energy [erg]"
+
 plot NaN notitle \
-, input  u 1:2  title "Explosion energy" w l ls 1  \
+, input  u 1:2  notitle "Explosion energy" w l ls 1  \
 
 reset
 set term pop

@@ -6,7 +6,7 @@ module fieldmod
     integer:: izone,jzone,kzone
     integer:: igs,jgs,kgs
     integer:: is,js,ks,ie,je,ke
-    real(8),dimension(:),allocatable:: x1b,x2b
+    real(8),dimension(:),allocatable:: x1b,x2b,dvl1a
     real(8),dimension(:),allocatable:: x1a,x2a
     real(8),dimension(:,:,:),allocatable:: d,v1,v2,v3,p,ei,gp
     real(8):: dx
@@ -75,8 +75,7 @@ subroutine ReadData
   ke=1
 
   if(.not. is_inited)then
-     allocate( x1b(in),x1a(in))
-     allocate( x2b(jn),x2a(jn))
+     allocate( x1b(in),x1a(in),dvl1a(in))
      allocate( d(in,jn,kn))
      allocate(v1(in,jn,kn))
      allocate(v2(in,jn,kn))
@@ -89,7 +88,7 @@ subroutine ReadData
   write(filename,'(a3,i5.5,a4)')"bin",incr,".dat"
   filename = trim(dirname)//filename
   open(unitbin,file=filename,status='old',form='binary')
-  read(unitbin)x1b(:),x1a(:)
+  read(unitbin)x1b(:),x1a(:),dvl1a(:)
 !  read(unitbin)x2b(:),x2a(:)
   read(unitbin)  d(:,:,:)
   read(unitbin) v1(:,:,:)
@@ -99,9 +98,6 @@ subroutine ReadData
   read(unitbin) ei(:,:,:)
   close(unitbin)
   
-  dx = x1b(2)-x1b(1)
-!  dy = x2b(2)-x2b(1)
-
   return
 end subroutine ReadData
 
@@ -149,7 +145,7 @@ subroutine Integration
   character(20),parameter::dirname="output/"
   character(40)::filename
   integer,parameter::unittot=1234
-  real(8)::Etot
+  real(8)::Etot,pi
 
   logical,save:: is_inited
   data is_inited / .false. /
@@ -159,11 +155,13 @@ subroutine Integration
      is_inited = .true.
   endif
 
+  pi = acos(-1.0d0)
+
   Etot=0.0d0
   k=ks
   j=js
   do i=is,ie
-     Etot = Etot + 0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k)
+     Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*4.0d0*pi
   enddo
 
   write(filename,'(a3,i5.5,a4)')"tot",incr,".dat"
@@ -174,7 +172,7 @@ subroutine Integration
 !                                    12345678   1234567890123     1234567890123   123456789012
 !  write(unittot,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
 
-  write(unittot,'(1x,4(1x,E13.3))') time,Etot
+  write(unittot,'(1x,4(1x,E13.3))') time/year,Etot
   close(unittot)
 
   return
