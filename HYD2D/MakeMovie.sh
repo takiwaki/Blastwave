@@ -10,6 +10,10 @@ else
     prename=$1
 fi
 
+if [ ! -d ${dirm} ]; then
+    mkdir ${dirm}
+fi
+
 echo $prename
 
 # first file

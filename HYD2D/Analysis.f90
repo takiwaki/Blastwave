@@ -113,13 +113,34 @@ subroutine Visualize1D
   character(40)::filename
   integer,parameter::unit1D=123
 
+  real(8),dimension(:),allocatable,save::d1d,p1d,v11d
+
   logical,save:: is_inited
   data is_inited / .false. /
 
   if(.not. is_inited)then
      call makedirs(dirname)
      is_inited = .true.
+     allocate( d1d(in))
+     allocate( p1d(in))
+     allocate(v11d(in))
   endif
+
+
+  d1d(:) = 0.0d0
+  p1d(:) = 0.0d0
+  v11d(:) = 0.0d0
+  k=ks
+  do i=is,ie
+  do j=js,je
+      d1d(i) =  d1d(i) +  d(i,j,k)*dvl2a(j)
+      p1d(i) =  p1d(i) +  p(i,j,k)*dvl2a(j)
+     v11d(i) = v11d(i) + v1(i,j,k)*dvl2a(j)
+  enddo
+      d1d(i) =  d1d(i)/sum(dvl2a(:))
+      p1d(i) =  p1d(i)/sum(dvl2a(:))
+     v11d(i) = v11d(i)/sum(dvl2a(:))
+  enddo
 
   write(filename,'(a3,i5.5,a4)')"rpr",incr,".dat"
   filename = trim(dirname)//filename
@@ -128,10 +149,9 @@ subroutine Visualize1D
   write(unit1D,'(1a,4(1x,E12.3))') "#",time/year
 !                                    12345678   1234567890123     1234567890123   123456789012
   write(unit1D,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
-  k=ks
-  j=js
+
   do i=is,ie
-     write(unit1D,'(1x,4(1x,E13.3))') x1b(i)/pc,d(i,j,k)/mu,p(i,j,k),v1(i,j,k)/1.0d5
+     write(unit1D,'(1x,4(1x,E13.3))') x1b(i)/pc,d1d(i)/mu,p1d(i),v11d(i)/1.0d5
   enddo
   close(unit1D)
 
@@ -161,9 +181,10 @@ subroutine Integration
 
   Etot=0.0d0
   k=ks
-  j=js
+  do j=js,je
   do i=is,ie
-     Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*4.0d0*pi
+     Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*dvl2a(j)*2.0d0*pi
+  enddo
   enddo
 
   write(filename,'(a3,i5.5,a4)')"tot",incr,".dat"
