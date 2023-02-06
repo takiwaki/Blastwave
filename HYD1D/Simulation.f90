@@ -35,7 +35,7 @@
 
 
       real(8),parameter:: x1min=0.0d0,x1max=1.0d2*pc
-      real(8),dimension(in)::x1a,x1b
+      real(8),dimension(in)::x1a,x1b,dvl1a
       real(8),dimension(jn)::x2a,x2b
       real(8),dimension(kn)::x3a,x3b
 
@@ -114,6 +114,9 @@ end module eosmod
       do i=1,in-1
          x1b(i) = 0.5d0*(x1a(i+1)+x1a(i))
       enddo
+      do i=is,ie
+         dvl1a(i) = (x1a(i+1)**3-x1a(i)**3)/3.0d0
+      enddo
 
       return
       end subroutine GenerateGrid
@@ -147,6 +150,8 @@ end module eosmod
       eexp = frac*(1.0d51)
       pre1 = eexp/(4.0*pi/3.0d0*dr**3)*(gam-1.0d0)  
       vel1 = sqrt((1.0d0-frac)*eexp/(4.0*pi/3.0d0*dr**3)/rho1)
+
+      write(6,*) "Eex= ",frac   ,"[10^51 erg]"
       write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
       write(6,*) "vel= ",vel1   ,"[cm/s]"
       write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
@@ -803,7 +808,9 @@ end module eosmod
       if (.not. is_inited ) then
          do i=is-1,ie+1 
             as1(i)  =  x1a(i)**2
-            dv1i(i) = 3.0d0/(x1a(i+1)**3 - x1a(i)**3)
+         enddo
+         do i=is,ie
+            dv1i(i) = 1.0d0/dvl1a(i) 
          enddo
          
          is_inited = .true.
@@ -866,9 +873,9 @@ end module eosmod
       integer,parameter:: unitout=17
       integer,parameter:: unitbin=13
       integer,parameter:: gs=0
-      integer,parameter:: nvar=5
-      real(8)::x1out(is-gs:ie+gs,2)
-      real(8)::x2out(js-gs:je+gs,2)
+      integer,parameter:: nvar=6
+      real(8)::x1out(is-gs:ie+gs,3)
+!      real(8)::x2out(js-gs:je+gs,2)
       real(8)::hydout(is-gs:ie+gs,js-gs:je+gs,ks,nvar)
 
       logical, save:: is_inited
@@ -891,6 +898,7 @@ end module eosmod
 
       x1out(is-gs:ie+gs,1) = x1b(is-gs:ie+gs)
       x1out(is-gs:ie+gs,2) = x1a(is-gs:ie+gs)
+      x1out(is-gs:ie+gs,3) = dvl1a(is-gs:ie+gs)
 
 !      x2out(js-gs:je+gs,1) = x2b(js-gs:je+gs)
 !      x2out(js-gs:je+gs,2) = x2a(js-gs:je+gs)
@@ -900,6 +908,7 @@ end module eosmod
       hydout(is-gs:ie+gs,js-gs:je+gs,ks,3) = v2(is-gs:ie+gs,js-gs:je+gs,ks)
       hydout(is-gs:ie+gs,js-gs:je+gs,ks,4) = v3(is-gs:ie+gs,js-gs:je+gs,ks)
       hydout(is-gs:ie+gs,js-gs:je+gs,ks,5) =  p(is-gs:ie+gs,js-gs:je+gs,ks)
+      hydout(is-gs:ie+gs,js-gs:je+gs,ks,6) = ei(is-gs:ie+gs,js-gs:je+gs,ks)
 !      hydout(is-gs:ie+gs,js-gs:je+gs,ks,6) = gp(is-gs:ie+gs,js-gs:je+gs,ks)
 
       write(filename,'(a3,i5.5,a4)')"bin",nout,".dat"

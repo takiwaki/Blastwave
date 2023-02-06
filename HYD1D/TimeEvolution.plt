@@ -29,8 +29,7 @@ set xlabel "Time"
 set log x
 
 plot NaN notitle \
-, input  u 1:2  title "Kinetic energy" w l ls 1  \
-, input  u 1:($3/10000)  title "Enstrophy (1/10000)" w l ls 3  \
+, input  u 1:2  title "Explosion energy" w l ls 1  \
 
 reset
 set term pop

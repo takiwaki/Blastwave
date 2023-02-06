@@ -43,10 +43,11 @@ else
     BIN= ${filename}
 endif
 
-# 2D cross section
-DEN   = $(patsubst ${dird}/unf%.dat,${dira}/vor%.dat,$(BIN))
-VORPNG= $(patsubst ${dira}/vor%.dat,${dirf}/vor%.png,$(DEN))
-KINPNG= $(patsubst ${dira}/vor%.dat,${dirf}/kin%.png,$(DEN))
+# 1D radial profile
+RPR   = $(patsubst ${dird}/unf%.dat,${dira}/rpr%.dat,$(BIN))
+DENPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/den%.png,$(RPR))
+VELPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/vel%.png,$(RPR))
+PREPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/pre%.png,$(RPR))
 
 # intgrated values 
 TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
@@ -55,23 +56,9 @@ TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
 # Movies
 ##########################################
 
-kinmovie=${dirm}/anikin.mp4
-vormovie=${dirm}/anivor.mp4
-
-2Dmovies=${vormovie} ${kinmovie}
-
-kspmovie=${dirm}/aniksp.mp4
-vspmovie=${dirm}/anivsp.mp4
-
-specmovies= ${kspmovie} ${vspmovie}
-
-
-moviefile=${2Dmovies} ${specmovies}
-##########################################
-# Final spectrum
-##########################################
-
-specfile=k-E_k.png
+denmovie=${dirm}/aniden.mp4
+velmovie=${dirm}/anivel.mp4
+premovie=${dirm}/anipre.mp4
 
 ##########################################
 # Time evolution
@@ -102,51 +89,14 @@ t-prof.dat: MakeTimeseq.sh ${TOT}
 
 movie: ${moviefile}
 
-${vormovie}: MakeMovie.sh ${VORPNG}
+${denmovie}: MakeMovie.sh ${DENPNG}
 	./MakeMovie.sh den
 
-${kinmovie}: MakeMovie.sh ${KINPNG}
-	./MakeMovie.sh kin
+${velmovie}: MakeMovie.sh ${VELPNG}
+	./MakeMovie.sh vel
 
-${kspmovie}: MakeMovie.sh ${KSPPNG}
-	./MakeMovie.sh ksp
-
-${vspmovie}: MakeMovie.sh ${VSPPNG}
-	./MakeMovie.sh vsp
-
-#################
-# gnuplot
-#################
-
-
-########################
-# 2D cross section
-########################
-
-2Dsnaps: ${VORPNG} ${KINPNG} 
-
-${VORPNG}: den.plt MakeSnap.sh ${DEN}
-	./MakeSnap.sh den den.plt
-
-${KINPNG}: den.plt MakeSnap.sh ${DEN}
-	./MakeSnap.sh den den.plt
-
-########################
-# spectrum
-########################
-
-spectrum: ${specfile}
-
-${specfile}: spectrum-fin.plt
-	gnuplot spectrum-fin.plt
-
-specs: ${KSPPNG} ${VSPPNG} 
-
-${KSPPNG}: spectrum.plt MakeSnap.sh ${SPC}
-	./MakeSnap.sh spectrum.plt
-
-${VSPPNG}: spectrum.plt MakeSnap.sh ${SPC}
-	./MakeSnap.sh spectrum.plt
+${premovie}: MakeMovie.sh ${PREPNG}
+	./MakeMovie.sh pre
 
 #################
 # analysis
@@ -157,10 +107,10 @@ count-number: ${countfile}
 ${countfile}: CountBindata.sh
 	./CountBindata.sh
 
-${DEN}: ${ana} ${BIN} ${countfile}
+${RPR}: ${ana} ${BIN} ${countfile}
 	./${ana}
 
-${SPC}: ${ana} ${BIN} ${countfile}
+${TOT}: ${ana} ${BIN} ${countfile}
 	./${ana}
 
 #################

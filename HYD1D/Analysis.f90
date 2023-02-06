@@ -8,7 +8,7 @@ module fieldmod
     integer:: is,js,ks,ie,je,ke
     real(8),dimension(:),allocatable:: x1b,x2b
     real(8),dimension(:),allocatable:: x1a,x2a
-    real(8),dimension(:,:,:),allocatable:: d,v1,v2,v3,p,gp
+    real(8),dimension(:,:,:),allocatable:: d,v1,v2,v3,p,ei,gp
     real(8):: dx
     real(8):: gam,rho0,Eexp
 
@@ -33,6 +33,7 @@ program data_analysis
      write(6,*) "file index",incr
      call ReadData
      call Visualize1D
+     call Integration
   enddo FILENUMBER
 
   stop
@@ -81,6 +82,7 @@ subroutine ReadData
      allocate(v2(in,jn,kn))
      allocate(v3(in,jn,kn))
      allocate( p(in,jn,kn))
+     allocate(ei(in,jn,kn))
      is_inited = .true.
   endif
 
@@ -94,6 +96,7 @@ subroutine ReadData
   read(unitbin) v2(:,:,:)
   read(unitbin) v3(:,:,:)
   read(unitbin)  p(:,:,:)
+  read(unitbin) ei(:,:,:)
   close(unitbin)
   
   dx = x1b(2)-x1b(1)
@@ -136,6 +139,46 @@ subroutine Visualize1D
 
   return
 end subroutine Visualize1D
+
+subroutine Integration
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+
+  character(20),parameter::dirname="output/"
+  character(40)::filename
+  integer,parameter::unittot=1234
+  real(8)::Etot
+
+  logical,save:: is_inited
+  data is_inited / .false. /
+
+  if(.not. is_inited)then
+     call makedirs(dirname)
+     is_inited = .true.
+  endif
+
+  Etot=0.0d0
+  k=ks
+  j=js
+  do i=is,ie
+     Etot = Etot + 0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k)
+  enddo
+
+  write(filename,'(a3,i5.5,a4)')"tot",incr,".dat"
+  filename = trim(dirname)//filename
+  open(unittot,file=filename,status='replace',form='formatted')
+
+!  write(unittot,'(1a,4(1x,E12.3))') "#",time/year
+!                                    12345678   1234567890123     1234567890123   123456789012
+!  write(unittot,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
+
+  write(unittot,'(1x,4(1x,E13.3))') time,Etot
+  close(unittot)
+
+  return
+end subroutine  Integration
 
 subroutine makedirs(outdir)
   implicit none
