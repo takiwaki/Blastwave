@@ -60,6 +60,7 @@ denmovie=${dirm}/aniden.mp4
 velmovie=${dirm}/anivel.mp4
 premovie=${dirm}/anipre.mp4
 
+movies = ${denmovie} ${velmovie} ${premovie}
 ##########################################
 # Time evolution
 ##########################################
@@ -70,7 +71,7 @@ timefile=t-E.png
 # Proceadures
 ##########################################
 
-all: ${exe} ${moviefile} ${specfile} ${timefile}
+all: ${exe} ${movies}
 
 .PHONY: all clean allclean
 
@@ -97,6 +98,20 @@ ${velmovie}: MakeMovie.sh ${VELPNG}
 
 ${premovie}: MakeMovie.sh ${PREPNG}
 	./MakeMovie.sh pre
+
+#################
+# gnuplot
+#################
+
+${DENPNG}: MakeSnap.sh radpro.plt
+	./MakeSnaps.sh rpr radpro.plt
+
+${velPNG}: MakeSnap.sh radpro.plt
+	./MakeSnaps.sh rpr radpro.plt
+
+${PREPNG}: MakeSnap.sh radpro.plt
+	./MakeSnaps.sh rpr radpro.plt
+
 
 #################
 # analysis
