@@ -1114,7 +1114,7 @@ end module eosmod
       data nout / 1 /
       integer,parameter:: unitout=17
       integer,parameter:: unitbin=13
-      integer,parameter:: gs=0
+      integer,parameter:: gs=1
       integer,parameter:: nvar=6
       real(8)::x1out(is-gs:ie+gs,3)
       real(8)::x2out(js-gs:je+gs,3)
@@ -1139,12 +1139,12 @@ end module eosmod
       write(unitout,*) "# ",jzones,gs
       close(unitout)
 
-      x1out(is-gs:ie+gs,1) = x1b(is-gs:ie+gs)
-      x1out(is-gs:ie+gs,2) = x1a(is-gs:ie+gs)
+      x1out(is-gs:ie+gs,1) =   x1b(is-gs:ie+gs)
+      x1out(is-gs:ie+gs,2) =   x1a(is-gs:ie+gs)
       x1out(is-gs:ie+gs,3) = dvl1a(is-gs:ie+gs)
 
-      x2out(js-gs:je+gs,1) = x2b(js-gs:je+gs)
-      x2out(js-gs:je+gs,2) = x2a(js-gs:je+gs)
+      x2out(js-gs:je+gs,1) =   x2b(js-gs:je+gs)
+      x2out(js-gs:je+gs,2) =   x2a(js-gs:je+gs)
       x2out(js-gs:je+gs,3) = dvl2a(js-gs:je+gs)
 
       hydout(is-gs:ie+gs,js-gs:je+gs,ks,1) =  d(is-gs:ie+gs,js-gs:je+gs,ks)

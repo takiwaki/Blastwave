@@ -33,6 +33,7 @@ program data_analysis
      write(6,*) "file index",incr
      call ReadData
      call Visualize1D
+     call Visualize2D
      call Integration
   enddo FILENUMBER
 
@@ -67,7 +68,7 @@ subroutine ReadData
   in=izone+2*igs
   jn=jzone+2*jgs
   kn=1
-
+!  write(6,*)igs,jgs
   is=1+igs
   js=1+jgs
   ks=1
@@ -102,6 +103,70 @@ subroutine ReadData
   
   return
 end subroutine ReadData
+
+subroutine Visualize2D
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+
+  character(20),parameter::dirname="output/"
+  character(40)::filename
+  integer,parameter::unit2D=432
+
+  real(8),dimension(:,:),allocatable,save::d2d,p2d,v12d
+
+  logical,save:: is_inited
+  data is_inited / .false. /
+
+  if(.not. is_inited)then
+     call makedirs(dirname)
+     is_inited = .true.
+     allocate( d2d(in,jn))
+     allocate( p2d(in,jn))
+     allocate(v12d(in,jn))
+  endif
+
+  k = ks
+! boundary 
+  do i=is,ie
+      d(i,js-1,k) =  d(i,js,k)
+      p(i,js-1,k) =  p(i,js,k)
+     v1(i,js-1,k) = v1(i,js,k)
+
+      d(i,je+1,k) =  d(i,je,k)
+      p(i,je+1,k) =  p(i,je,k)
+     v1(i,je+1,k) = v1(i,je,k)
+  enddo
+
+  do j=js,je+1
+  do i=is,ie
+       d2d(i,j) =  0.5d0*( d(i,j,k)+ d(i,j-1,k))
+       p2d(i,j) =  0.5d0*( p(i,j,k)+ p(i,j-1,k))
+      v12d(i,j) =  0.5d0*(v1(i,j,k)+v1(i,j-1,k))
+  enddo
+  enddo
+
+
+  write(filename,'(a3,i5.5,a4)')"rtp",incr,".dat"
+  filename = trim(dirname)//filename
+  open(unit2D,file=filename,status='replace',form='formatted')
+
+  write(unit2D,'(1a,4(1x,E12.3))') "#",time/year
+!                                    12345678    1234567890123   1234567890123   123456789012
+  write(unit2D,'(1a,5(1x,a13))') "#","1:r[pc] ","2:theta[rad] ","3:den[1/cm^3] ","4:p[erg/cm3] ","5:vel[km/s] "
+
+  do j=js,je+1
+  do i=is,ie
+     write(unit2D,'(1x,5(1x,E13.3))') x1b(i)/pc,x2a(j),d2d(i,j)/mu,p2d(i,j),v12d(i,j)/1.0d5
+  enddo
+     write(unit2D,*)
+  enddo
+
+  close(unit2D)
+
+  return
+end subroutine Visualize2D
 
 subroutine Visualize1D
   use unitsmod
