@@ -47,7 +47,7 @@ The output is saved in `output/`.
 ### 2D plots and animation.
 If you need 2D snapshots. 
     
-    make 2Dsnaps
+    make 1Dsnaps
    
 Using `output/vor*.dat`, image files are made and save as `figures/vor*.png`.
 To make movie from the files. Type as follows.
