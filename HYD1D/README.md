@@ -1,9 +1,6 @@
-# 2D hydrodynamic deacaying turbulence
+# 1D Blastwave simulation
 
 [Go to top](../README.md)  
-
-## Setups and Results
-[Go to Notion page.](https://www.notion.so/Turbulence-Studies-e4836ad642684f8f992d54a1f7e22635#97db0fffb85541a891157c14669bd36e)
 
 ## How to run
 
@@ -17,12 +14,12 @@ Then `Simulation.x`is made in this directory.
 ### run
 Let's run the code.
     
-    ./Simulation.x
+    qsub pbs_more.sh
     
 The simulation data is saved in `bindata/`.
 
 ### analysis
-To analyze the data, let us make `Analysis.x`.
+GO to analysis server. To analyze the data, let us make `Analysis.x`.
     
     make Analysis.x
     
