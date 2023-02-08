@@ -102,6 +102,8 @@ ${premovie}: MakeMovie.sh ${PREPNG}
 # gnuplot
 #################
 
+1Dsnaps: ${DENPNG} ${velPNG} ${PREPNG}
+
 ${DENPNG}: MakeSnap.sh radpro.plt ${RPR}
 	./MakeSnap.sh rpr radpro.plt
 
