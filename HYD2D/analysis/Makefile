@@ -6,7 +6,6 @@
 # Programs
 ##########################################
 
-exe=Simulation.x
 ana=Analysis.x
 
 ######################	
@@ -24,7 +23,7 @@ fopt=-g -traceback -check all -fpe0
 # directory
 ######################
 
-dird := bindata
+dird := ../bindata
 dira := output
 dirf := figures
 dirm := movies
@@ -95,7 +94,7 @@ t-prof.dat: MakeTimeseq.sh ${TOT}
 # ffmpeg
 #################
 
-movie: ${moviefile}
+movie: ${movies}
 
 ${denmovie}: MakeMovie.sh ${DENPNG}
 	./MakeMovie.sh den
@@ -113,16 +112,16 @@ ${dntmovie}: MakeMovie.sh ${DENTPNG}
 # gnuplot
 #################
 
-${DENPNG}: MakeSnap.sh radpro.plt
+${DENPNG}: MakeSnap.sh radpro.plt ${RPR}
 	./MakeSnap.sh rpr radpro.plt
 
-${velPNG}: MakeSnap.sh radpro.plt
+${velPNG}: MakeSnap.sh radpro.plt ${RPR}
 	./MakeSnap.sh rpr radpro.plt
 
-${PREPNG}: MakeSnap.sh radpro.plt
+${PREPNG}: MakeSnap.sh radpro.plt ${RPR}
 	./MakeSnap.sh rpr radpro.plt
 
-${DENTPNG}: MakeSnap.sh rttpro.plt
+${DENTPNG}: MakeSnap.sh rttpro.plt ${RPR}
 	./MakeSnap.sh rtp rttpro.plt
 
 
@@ -145,20 +144,15 @@ ${TOT}: ${ana} ${BIN} ${countfile}
 # simulation
 #################
 
-${BIN}: ${exe}
-	./${exe}
-
 ${ana}: Analysis.f90
 	${fc} ${fopt} $< -o ${ana}
 
-${exe}: Simulation.f90
-	${fc} ${fopt} $< -o ${exe}
 
 #################
 # clean up
 #################
 clean:
-	rm -f ${exe} ${ana} *.o *.mod *~
+	rm -f  ${ana} *.o *.mod *~
 
 allclean:
-	rm -fr ${dirm} ${dirf} ${dird} ${dira} ${countfile}
+	rm -fr ${dirm} ${dirf}  ${dira} ${countfile}

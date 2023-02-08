@@ -1,3 +1,13 @@
+module unitsmod
+  implicit none
+  real(8),parameter::    pc  = 3.085677581d18   ! parsec in [cm]
+  real(8),parameter::    mu  = 1.660539066d-24  ! g
+  real(8),parameter:: Msolar = 1.989e33         ! g
+  real(8),parameter::   kbol = 1.380649d-23     ! J/K
+  real(8),parameter::   year = 365.0d0*24*60*60 ! sec
+  
+end module unitsmod
+
 module fieldmod
     implicit none
     integer:: incr
@@ -43,7 +53,7 @@ end program data_analysis
 subroutine ReadData
   use fieldmod
   implicit none   
-  character(20),parameter::dirname="bindata/"
+  character(20),parameter::dirname="../bindata/"
   character(40)::filename
   integer,parameter::unitinp=13
   integer,parameter::unitbin=14
@@ -274,3 +284,5 @@ subroutine makedirs(outdir)
   write(*, *) trim(command)
   call system(command)
 end subroutine makedirs
+
+
