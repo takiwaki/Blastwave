@@ -52,15 +52,10 @@ If you need 2D snapshots.
 Using `output/vor*.dat`, image files are made and save as `figures/vor*.png`.
 To make movie from the files. Type as follows.
 
-    make movie
+    make movies
    
 The movie files in saved in `movie/anivor`.
 
-### spectrum
-To obtain the spectrum
-   
-      make spectrum
-      
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
    
