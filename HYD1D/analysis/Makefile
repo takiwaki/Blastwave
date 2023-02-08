@@ -87,7 +87,7 @@ t-prof.dat: MakeTimeseq.sh ${TOT}
 # ffmpeg
 #################
 
-movie: ${moviefile}
+movie: ${movies}
 
 ${denmovie}: MakeMovie.sh ${DENPNG}
 	./MakeMovie.sh den
