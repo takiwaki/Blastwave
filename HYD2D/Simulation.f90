@@ -148,7 +148,7 @@ end module eosmod
       implicit none
       integer::i,j,k
       real(8),parameter:: neu = 3.0d0
-      real(8):: rho1,rho2
+      real(8):: rho1,rho2,rho3
       real(8):: ein0
       real(8):: pre1,pre2
       real(8):: vel1,vel2
@@ -172,6 +172,9 @@ end module eosmod
       pre1 = eexp/(4.0*pi/3.0d0*dr**3)*(gam-1.0d0)  
       vel1 = sqrt((1.0d0-frac)*eexp/(4.0*pi/3.0d0*dr**3)/rho1)
 
+! dense clamp
+      rho3 = 3.0d0*mu ! Intersteller medium 1 [1/cm^3]
+      
       write(6,*) "Eex= ",frac   ,"[10^51 erg]"
       write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
       write(6,*) "vel= ",vel1   ,"[cm/s]"
@@ -186,6 +189,11 @@ end module eosmod
              d(i,j,k) = max(rho1*(x1b(i)/dr)**(neu/(gam-1)),rho2)
              p(i,j,k) = pre1
             v1(i,j,k) = vel1*max(x1b(i)/dr,0.0d0)
+         else if( 5.0d0*pc <x1b(i) .and. x1b(i) < 10.0d0*pc &
+    &       .and. (0.5-0.2)*pi <x2b(j) .and. x2b(j) < (0.5+0.2)*pi )then
+             d(i,j,k) = rho3
+             p(i,j,k) = pre2
+            v1(i,j,k) = 0.0d0
          else
              d(i,j,k) = rho2
              p(i,j,k) = pre2

@@ -4,7 +4,7 @@
 ##########################################
 
 # Range of the plot [pc]
-srange=100
+srange=50
 
 # Format of the output
 pngflag=1
@@ -58,10 +58,11 @@ set label time at screen 0.65, screen 0.85
 
 # OUTPUT PNG
 if (pngflag==1) set term push
-if (pngflag==1) set term png
+if (pngflag==1) set term pngcairo  enhanced font "Helvetica, 12" size 550,500
 
 
 ofname = sprintf("figures/dnt%05d.png",ifnum)
+print ofname
 if (pngflag==1) set output ofname
 
 ####################

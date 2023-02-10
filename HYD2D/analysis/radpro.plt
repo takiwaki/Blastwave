@@ -6,7 +6,7 @@ unset key
 
 # PNG
 if (exist("ifnum")==0 ) set term push
-set term pngcairo enhanced font "Helvetica, 12" 
+set term pngcairo enhanced font "Helvetica, 12" size 640,480 
 # crop 
 
 if (exist("ifnum")==0 ) ifnum=100
