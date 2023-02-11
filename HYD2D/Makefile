@@ -12,8 +12,8 @@ exe=Simulation.x
 # complile options
 ######################
 fc=ifort -extend-source
-#fopt=-g -traceback -O2
-fopt=-g -traceback -check all -fpe0
+fopt=-g -traceback -O2
+#fopt=-g -traceback -check all -fpe0
 
 ##########################################
 # Timeseqencial data and figures
@@ -28,9 +28,6 @@ dird := bindata
 #################
 # simulation
 #################
-
-${ana}: Analysis.f90
-	${fc} ${fopt} $< -o ${ana}
 
 ${exe}: Simulation.f90
 	${fc} ${fopt} $< -o ${exe}

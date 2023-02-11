@@ -21,7 +21,7 @@
       real(8),parameter:: dtout=timemax/500
 
       integer,parameter::izones=200
-      integer,parameter::jzones=32
+      integer,parameter::jzones=100
       integer,parameter::mgn=2
       integer,parameter::in=izones+2*mgn+1 &
      &                  ,jn=jzones+2*mgn+1 &
@@ -156,6 +156,10 @@ end module eosmod
       real(8):: pi
       real(8):: frac,eexp
 
+      integer,dimension(2) :: seed
+      real(8),dimension(1) :: rnum
+      real(8),parameter :: rrv =1.0d-2
+      
       pi =acos(-1.0d0)
       dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
       write(6,*) "shell length [pc]",dr/pc
@@ -189,11 +193,11 @@ end module eosmod
              d(i,j,k) = max(rho1*(x1b(i)/dr)**(neu/(gam-1)),rho2)
              p(i,j,k) = pre1
             v1(i,j,k) = vel1*max(x1b(i)/dr,0.0d0)
-         else if( 5.0d0*pc <x1b(i) .and. x1b(i) < 10.0d0*pc &
-    &       .and. (0.5-0.2)*pi <x2b(j) .and. x2b(j) < (0.5+0.2)*pi )then
-             d(i,j,k) = rho3
-             p(i,j,k) = pre2
-            v1(i,j,k) = 0.0d0
+!         else if( 5.0d0*pc <x1b(i) .and. x1b(i) < 10.0d0*pc &
+!    &       .and. (0.5-0.2)*pi <x2b(j) .and. x2b(j) < (0.5+0.2)*pi )then
+!             d(i,j,k) = rho3
+!             p(i,j,k) = pre2
+!            v1(i,j,k) = 0.0d0
          else
              d(i,j,k) = rho2
              p(i,j,k) = pre2
@@ -203,6 +207,23 @@ end module eosmod
       enddo
       enddo
 
+      write(6,*) rrv*100.0d0 &
+     & , "% of Randam Perturbation imposed on density"
+      seed(1) = 1
+      seed(2) = 1
+      call random_seed(PUT=seed(1:2))
+
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         call random_number(rnum)
+            d(i,j,k) = d(i,j,k)*(1.0d0+rrv*2.0d0*(rnum(1)-0.5d0))
+      enddo
+      enddo
+      enddo
+
+      
+      
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -285,6 +306,8 @@ end module eosmod
       use commons
       implicit none
       integer::i,j,k
+      
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -299,6 +322,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
       
       return
       end subroutine Consvvariable
@@ -308,6 +332,8 @@ end module eosmod
       use eosmod
       implicit none
       integer::i,j,k
+      
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -329,6 +355,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
       return
       end subroutine PrimVariable
@@ -342,7 +369,9 @@ end module eosmod
       real(8)::dtlocal
       real(8)::dtmin
       integer::i,j,k
+      
       dtmin=1.0d90
+!$omp parallel do reduction(min:dtmin) private(dtl1,dtl2,dtl3,dtlocal), collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -354,6 +383,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
       dt = Coul * dtmin
 !      write(6,*)"dt",dt
@@ -369,6 +399,7 @@ end module eosmod
 
 !      do j=1,jn-1
 
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=1,in-1
@@ -413,7 +444,7 @@ end module eosmod
       enddo
       enddo
       enddo
-
+!$end omp parallel
 
 
       return
@@ -510,6 +541,7 @@ end module eosmod
      enddo
 
       k=ks
+!$omp parallel do collapse(2)
       do j=js,je
       do i=is-1,ie+1
          dsvp(:) = (svc(:,i+1,j,k) -svc(:,i,j,k)                 )
@@ -525,7 +557,9 @@ end module eosmod
          rigtpr(:,i  ,j,k) = svc(:,i,j,k) - 0.5d0*dsv(:)*ctl(i)
       enddo
       enddo
+!$end omp parallel
 
+!$omp parallel do collapse(2)
       do j=js,je
       do i=is,ie+1
          leftco(mudn,i,j,k)=leftpr(nden,i,j,k) ! rho
@@ -585,7 +619,9 @@ end module eosmod
 
       enddo
       enddo
+!$end omp parallel
 
+!$omp parallel do collapse(2)
       do j=js,je
       do i=is,ie+1
          leftst(:)=leftco(:,i,j,k)
@@ -599,6 +635,7 @@ end module eosmod
          nflux1(meto,i,j,k)=nflux(meto)
       enddo
       enddo
+!$end omp parallel
 
       return
       end subroutine Numericalflux1
@@ -667,6 +704,7 @@ end module eosmod
      enddo
 
       k=ks
+!$omp parallel do collapse(2)
       do i=is,ie
       do j=js-1,je+1
          dsvp(:) = (svc(:,i,j+1,k) -svc(:,i,j,k)                 )*frd(j)
@@ -680,7 +718,9 @@ end module eosmod
 
        enddo
        enddo  
+!$end omp parallel
 
+!$omp parallel do collapse(2)
       do i=is,ie
       do j=js,je+1
          leftco(mudn,i,j,k)=leftpr(nden,i,j,k)
@@ -740,7 +780,9 @@ end module eosmod
 
       enddo
       enddo
+!$end omp parallel
 
+!$omp parallel do collapse(2)
       do i=is,ie
       do j=js,je+1
          leftst(:)=leftco(:,i,j,k)
@@ -754,7 +796,8 @@ end module eosmod
          nflux2(meto,i,j,k)=nflux(meto)
       enddo
       enddo
-
+!$end omp parallel
+      
       return
       end subroutine Numericalflux2
 
@@ -986,6 +1029,7 @@ end module eosmod
       implicit none
       integer :: i,j,k,n
 
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie+1
@@ -1000,7 +1044,9 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
+!$omp parallel do collapse(3)
       do k=ks,ke
       do i=is,ie
       do j=js,je+1
@@ -1015,8 +1061,18 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
-       grvsrc3(:,:,:) = 0.0d0
+!$omp parallel do collapse(3)
+      do k=ks,ke
+      do i=is,ie
+      do j=js,je
+       grvsrc3(i,j,k) = 0.0d0
+      enddo
+      enddo
+      enddo
+!$end omp parallel
+
 
       return
       end subroutine  GravForce
@@ -1050,6 +1106,7 @@ end module eosmod
       endif
 
 
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -1106,7 +1163,8 @@ end module eosmod
       enddo
       enddo
       enddo
-
+!$end omp parallel
+      
       return
       end subroutine UpdateConsv
 
