@@ -1,4 +1,4 @@
-# 2D hydrodynamic deacaying turbulence
+# 2D Blastwave
 
 [Go to top](../README.md)  
 
