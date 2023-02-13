@@ -44,17 +44,21 @@ Then preparation is done. Run the analyis.
     ./Analyis.x
     
 The output is saved in `output/`.
-### 2D plots and animation.
+### 1D plots and animation.
 If you need 2D snapshots. 
     
     make 1Dsnaps
    
-Using `output/vor*.dat`, image files are made and save as `figures/vor*.png`.
+Using `output/rpr*.dat` (Radial PRofile), image files are made and save as `figures/*.png` (e.g., `den00100.png`).
 To make movie from the files. Type as follows.
 
     make movies
    
-The movie files in saved in `movie/anivor`.
+The movie files in saved in `movies/`. You can see the movie with the following command.
+
+    ls movies/
+    mplayor movies/ani???.mp4
+   
 
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
