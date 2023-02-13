@@ -36,7 +36,7 @@ GO to analysis server. Here ?? below is 09-14. To analyze the data, let us make 
     
 Now you have many time-snapshots of data. To count it, use a script.
     
-    CountBindata.sh
+    ./CountBindata.sh
    
 See the file, `cat control.dat`. You can know the number of files.
 Then preparation is done. Run the analyis.
