@@ -20,8 +20,8 @@ print  ifnames." found"
 
 command = sprintf(" head -n 1 %s | sed 's/#//' ",ifnames)
 time   = system(command)
+timetxt="time= ".time." yr"
 print "time= ".time
-
 
 set xlabel "Radius [pc]" offset 0,0
 
@@ -33,7 +33,7 @@ set xlabel "Radius [pc]" offset 0,0
 ofname = sprintf("figures/pre%05d.png",ifnum)
 set output ofname
 
-set label 1 time at screen 0.45, screen 0.845
+set label 1 timetxt at screen 0.45, screen 0.845
 set ylabel "Pressure [erg/cm^3]" offset 0,0
 
 plot  \
@@ -47,7 +47,7 @@ plot  \
 ofname = sprintf("figures/den%05d.png",ifnum)
 set output ofname
 
-set label 1 time at screen 0.45, screen 0.845
+set label 1 timetxt at screen 0.45, screen 0.845
 set ylabel "Density [1/cm^3]" offset 0,0
 
 plot  \
@@ -60,7 +60,7 @@ plot  \
 ofname = sprintf("figures/vel%05d.png",ifnum)
 set output ofname
 
-set label 1 time at screen 0.45, screen 0.845
+set label 1 timetxt at screen 0.45, screen 0.845
 set ylabel "velocity [km/s]" offset 0,0
 
 plot  \
