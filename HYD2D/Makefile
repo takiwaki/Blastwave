@@ -37,3 +37,6 @@ ${exe}: Simulation.f90
 #################
 clean:
 	rm -f ${exe} *.o *.mod *~
+
+allclean:
+	rm -f ${dird} ${exe} *.o *.mod *~
