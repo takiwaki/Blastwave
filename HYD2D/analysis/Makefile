@@ -50,8 +50,8 @@ PREPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/pre%.png,$(RPR))
 
 RTP    = $(patsubst ${dird}/unf%.dat,${dira}/rtp%.dat,$(BIN))
 DENTPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/dnt%.png,$(RTP))
-#VELTPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/vel%.png,$(RTP))
-#PRETPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/pre%.png,$(RTP))
+VELTPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/vlt%.png,$(RTP))
+PRETPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/prt%.png,$(RTP))
 
 # intgrated values 
 TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
@@ -111,9 +111,9 @@ ${premovie}: MakeMovie.sh ${PREPNG}
 
 ${dntmovie}: MakeMovie.sh ${DENTPNG}
 	./MakeMovie.sh dnt
-${dntmovie}: MakeMovie.sh ${VELTPNG}
+${vltmovie}: MakeMovie.sh ${VELTPNG}
 	./MakeMovie.sh vlt
-${dntmovie}: MakeMovie.sh ${PRETPNG}
+${prtmovie}: MakeMovie.sh ${PRETPNG}
 	./MakeMovie.sh prt
 
 #################

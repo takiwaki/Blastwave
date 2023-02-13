@@ -61,11 +61,6 @@ set label timetxt at screen 0.65, screen 0.85
 if (pngflag==1) set term push
 if (pngflag==1) set term pngcairo  enhanced font "Helvetica, 12" size 550,500
 
-
-ofname = sprintf("figures/dnt%05d.png",ifnum)
-print ofname
-if (pngflag==1) set output ofname
-
 ####################
 # Annotation
 ####################
@@ -106,10 +101,35 @@ set cbtics offset 0,3.2
 ####################
 
 
-# Main plot
+# Density
+ofname = sprintf("figures/dnt%05d.png",ifnum)
+print ofname
+if (pngflag==1) set output ofname
+
+
 splot [-srange:srange][-srange:srange] \
   ifnames u ( $1*sin($2)):($1*cos($2)):($1<srange?($3):NaN) w pm3d \
 , ifnames u (-$1*sin($2)):($1*cos($2)):($1<srange?($3):NaN) w pm3d \
+
+
+# Pressure
+ofname = sprintf("figures/prt%05d.png",ifnum)
+print ofname
+if (pngflag==1) set output ofname
+
+splot [-srange:srange][-srange:srange] \
+  ifnames u ( $1*sin($2)):($1*cos($2)):($1<srange?($4):NaN) w pm3d \
+, ifnames u (-$1*sin($2)):($1*cos($2)):($1<srange?($4):NaN) w pm3d \
+
+# Velocity
+ofname = sprintf("figures/vlt%05d.png",ifnum)
+print ofname
+if (pngflag==1) set output ofname
+
+splot [-srange:srange][-srange:srange] \
+  ifnames u ( $1*sin($2)):($1*cos($2)):($1<srange?($5):NaN) w pm3d \
+, ifnames u (-$1*sin($2)):($1*cos($2)):($1<srange?($5):NaN) w pm3d \
+
 
 unset label
 
