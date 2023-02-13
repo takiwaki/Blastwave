@@ -17,8 +17,8 @@
       real(8)::time,dt
       real(8),parameter:: Coul=0.25d0
       data time / 0.0d0 /
-      real(8),parameter:: timemax=1.0d5*year
-      real(8),parameter:: dtout=timemax/500
+      real(8),parameter:: timemax=2.0d3*year
+      real(8),parameter:: dtout=timemax/200
 
       integer,parameter::izones=200
       integer,parameter::jzones=100
@@ -34,7 +34,7 @@
      &                  ,ke=1
 
 
-      real(8),parameter:: x1min=0.0d0,x1max=1.0d2*pc
+      real(8),parameter:: x1min=0.0d0,x1max=10.0d0*pc
       real(8),dimension(in)::x1a,x1b,dvl1a
 
       real(8),parameter:: x2min=0.0d0,x2max=acos(-1.0)
@@ -53,6 +53,7 @@
       implicit none
 ! adiabatic
       real(8),parameter::gam=4.0d0/3.0d0 !! adiabatic index
+      real(8)::eimin !! minimum energy
 ! isothermal
 !      real(8)::csiso  !! isothemal sound speed
 end module eosmod
@@ -222,7 +223,7 @@ end module eosmod
       enddo
       enddo
 
-      
+      eimin = 1.0d-5*pre2/(gam-1.0d0)
       
       do k=ks,ke
       do j=js,je
@@ -346,6 +347,7 @@ end module eosmod
      &                    +v1(i,j,k)**2   &
      &                    +v2(i,j,k)**2   &
      &                    +v3(i,j,k)**2)
+          ei(i,j,k) = max(ei(i,j,k),eimin)
 ! adiabatic
            p(i,j,k) =  ei(i,j,k)*(gam-1.0d0)
           cs(i,j,k) =  sqrt(gam*p(i,j,k)/d(i,j,k))
