@@ -64,20 +64,20 @@ movies = ${denmovie} ${velmovie} ${premovie}
 # Time evolution
 ##########################################
 
-timefile=t-E.png
+timeevo=t-E.png
 
 ##########################################
 # Proceadures
 ##########################################
 
-all: ${ana} ${movies}
+all: ${ana} ${movies} ${timeevo}
 
 .PHONY: all clean allclean
 
 ##########################################
 # Time evolution
 ##########################################
-${timefile}: TimeEvolution.plt t-prof.dat
+${timeevo}: TimeEvolution.plt t-prof.dat
 	gnuplot TimeEvolution.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
@@ -136,7 +136,6 @@ ${TOT}: ${ana} ${BIN} ${countfile}
 ${ana}: Analysis.f90
 	${fc} ${fopt} $< -o ${ana}
 
-
 #################
 # clean up
 #################
@@ -144,4 +143,4 @@ clean:
 	rm -f ${ana} *.o *.mod *~
 
 allclean:
-	rm -fr ${dirm} ${dirf} ${dira} ${countfile}
+	rm -fr ${dirm} ${dirf} ${dira} ${countfile} ${timeevo}
