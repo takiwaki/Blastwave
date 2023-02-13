@@ -39,4 +39,4 @@ clean:
 	rm -f ${exe} *.o *.mod *~
 
 allclean:
-	rm -f ${dird} ${exe} *.o *.mod *~
+	rm -rf ${dird} ${exe} *.o *.mod *~

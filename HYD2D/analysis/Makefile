@@ -65,8 +65,12 @@ velmovie=${dirm}/anivel.mp4
 premovie=${dirm}/anipre.mp4
 
 dntmovie=${dirm}/anidnt.mp4
+vltmovie=${dirm}/anivlt.mp4
+prtmovie=${dirm}/aniprt.mp4
 
-movies = ${denmovie} ${velmovie} ${premovie} ${dntmovie}
+#movies = ${denmovie} ${velmovie} ${premovie} ${dntmovie}
+movies = ${vltmovie} ${prtmovie} ${dntmovie}
+
 ##########################################
 # Time evolution
 ##########################################
@@ -107,6 +111,10 @@ ${premovie}: MakeMovie.sh ${PREPNG}
 
 ${dntmovie}: MakeMovie.sh ${DENTPNG}
 	./MakeMovie.sh dnt
+${dntmovie}: MakeMovie.sh ${VELTPNG}
+	./MakeMovie.sh vlt
+${dntmovie}: MakeMovie.sh ${PRETPNG}
+	./MakeMovie.sh prt
 
 #################
 # gnuplot
@@ -124,7 +132,11 @@ ${PREPNG}: MakeSnap.sh radpro.plt ${RPR}
 ${DENTPNG}: MakeSnap.sh rttpro.plt ${RPR}
 	./MakeSnap.sh rtp rttpro.plt
 
+${VELTPNG}: MakeSnap.sh rttpro.plt ${RPR}
+	./MakeSnap.sh rtp rttpro.plt
 
+${PRETPNG}: MakeSnap.sh rttpro.plt ${RPR}
+	./MakeSnap.sh rtp rttpro.plt
 
 #################
 # analysis
@@ -156,4 +168,4 @@ clean:
 	rm -f  ${ana} *.o *.mod *~
 
 allclean:
-	rm -fr ${dirm} ${dirf}  ${dira} ${countfile}
+	rm -fr ${dirm} ${dirf} ${dira} ${countfile}
