@@ -45,11 +45,16 @@ Then preparation is done. Run the analyis.
     
 The output is saved in `output/`.
 ### 1D plots and animation.
-If you need 1D snapshots. 
+If you need 1D snapshots, use the following command. Using `output/rpr*.dat` (Radial PRofile), image files are made and save as `figures/*.png` (e.g., `den00050.png`).
+    
+    gnuplot radpro.plt
+    ls figures/
+    display den00050.png
+    
+All snapshots are made by the following command. 
     
     make 1Dsnaps
    
-Using `output/rpr*.dat` (Radial PRofile), image files are made and save as `figures/*.png` (e.g., `den00100.png`).
 To make movie from the files. Type as follows.
 
     make movies
