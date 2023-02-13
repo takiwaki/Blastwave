@@ -15,10 +15,10 @@
       integer::nhy
       integer,parameter::nhymax=100000
       real(8)::time,dt
-      real(8),parameter:: Coul=0.25d0
+      real(8),parameter:: Coul=0.1d0
       data time / 0.0d0 /
-      real(8),parameter:: timemax=1.0d5*year
-      real(8),parameter:: dtout=timemax/500
+      real(8),parameter:: timemax=2.0d3*year
+      real(8),parameter:: dtout=timemax/200
 
       integer,parameter::izones=200
       integer,parameter::jzones=1
@@ -34,7 +34,7 @@
      &                  ,ke=1
 
 
-      real(8),parameter:: x1min=0.0d0,x1max=1.0d2*pc
+      real(8),parameter:: x1min=0.0d0,x1max=10.0d0*pc
       real(8),dimension(in)::x1a,x1b,dvl1a
       real(8),dimension(jn)::x2a,x2b
       real(8),dimension(kn)::x3a,x3b
@@ -50,6 +50,7 @@
       implicit none
 ! adiabatic
       real(8),parameter::gam=4.0d0/3.0d0 !! adiabatic index
+      real(8)::eimin !! minimum energy
 ! isothermal
 !      real(8)::csiso  !! isothemal sound speed
 end module eosmod
@@ -133,7 +134,7 @@ end module eosmod
       real(8):: vel1,vel2
       real(8):: dr
       real(8):: pi
-      real(8):: frac,eexp
+      real(8):: frac,eexp,vol
 
       pi =acos(-1.0d0)
       dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
@@ -145,11 +146,12 @@ end module eosmod
       vel2 = 0.0d0
 
 ! blast wave
+      vol  = (4.0*pi/3.0d0*dr**3)-(4.0*pi/3.0d0*x1min**3)
       frac = 0.8d0
-      rho1 = (10.0d0*Msolar)/(4.0*pi/3.0d0*dr**3)
-      eexp = frac*(1.0d51)
-      pre1 = eexp/(4.0*pi/3.0d0*dr**3)*(gam-1.0d0)  
-      vel1 = sqrt((1.0d0-frac)*eexp/(4.0*pi/3.0d0*dr**3)/rho1)
+      rho1 = (10.0d0*Msolar)/vol
+      eexp = frac*(1.0d51) ! erg
+      pre1 = eexp/vol*(gam-1.0d0)  
+      vel1 = sqrt((1.0d0-frac)*eexp/vol/rho1)
 
       write(6,*) "Eex= ",frac   ,"[10^51 erg]"
       write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
@@ -174,6 +176,8 @@ end module eosmod
       enddo
       enddo
 
+      eimin = 1.0d-5*pre2/(gam-1.0d0)
+      
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -264,7 +268,7 @@ end module eosmod
      &                    +v1(i,j,k)**2   &
      &                    +v2(i,j,k)**2   &
      &                    +v3(i,j,k)**2)
-
+          ei(i,j,k) = max(ei(i,j,k),eimin)
 ! adiabatic
            p(i,j,k) =  ei(i,j,k)*(gam-1.0d0)
           cs(i,j,k) =  sqrt(gam*p(i,j,k)/d(i,j,k))
