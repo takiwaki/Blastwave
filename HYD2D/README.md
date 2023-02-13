@@ -1,15 +1,21 @@
-# 2D Blastwave
+# 2D Blastwave simulation
 
 [Go to top](../README.md)  
-
-## Setups and Results
-[Go to Notion page.](https://www.notion.so/Turbulence-Studies-e4836ad642684f8f992d54a1f7e22635#97db0fffb85541a891157c14669bd36e)
 
 ## How to run
 
 ### compile 
+This is the instruction for spring school of division of science. First login the server, more.
+
+    ssh <your account>@more.cfca.nao.ac.jp
+    
+Then copy the source code.
+
+    cd /cfca-work/<your account>
+    cp -r /cfca-work/dos00/Blastwave .
 To run the code, you need to compile 'Simulation.f90'.
     
+    cd Blastwave/HYD2D
     make Simulation.x
     
 Then `Simulation.x`is made in this directory.
@@ -17,13 +23,15 @@ Then `Simulation.x`is made in this directory.
 ### run
 Let's run the code.
     
-    ./Simulation.x
+    qsub pbs_more.sh
     
 The simulation data is saved in `bindata/`.
 
 ### analysis
-To analyze the data, let us make `Analysis.x`.
+GO to analysis server. Here ?? below is 09-14. To analyze the data, let us make `Analysis.x`.
     
+    ssh <your account>@an??.cfca.nao.ac.jp
+    cd /cfca-work/<your account>/Blastwave/HYD2D/analysis .
     make Analysis.x
     
 Now you have many time-snapshots of data. To count it, use a script.
@@ -44,15 +52,10 @@ If you need 2D snapshots.
 Using `output/vor*.dat`, image files are made and save as `figures/vor*.png`.
 To make movie from the files. Type as follows.
 
-    make movie
+    make movies
    
 The movie files in saved in `movie/anivor`.
 
-### spectrum
-To obtain the spectrum
-   
-      make spectrum
-      
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
    
