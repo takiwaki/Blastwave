@@ -13,7 +13,7 @@ Then copy the source code.
 
     cd /cfca-work/<your account>
     cp -r /cfca-work/dos00/Blastwave .
-To run the code, you need to compile 'Simulation.f90'.
+To run the code, you need to compile `Simulation.f90`.
     
     cd Blastwave/HYD2D
     make Simulation.x
@@ -45,17 +45,26 @@ Then preparation is done. Run the analyis.
     
 The output is saved in `output/`.
 ### 2D plots and animation.
-If you need 2D snapshots. 
+
+If you need 2D snapshots, use the following command. Using `output/rtp*.dat` (Radial and Theta Pofile), image files are made and save as `figures/*.png` (e.g., `dnt00050.png`).
+    
+    gnuplot rttpro.plt
+    ls figures/
+    display dnt00050.png
+    
+All snapshots are made by the following command. 
     
     make 2Dsnaps
    
-Using `output/vor*.dat`, image files are made and save as `figures/vor*.png`.
 To make movie from the files. Type as follows.
 
     make movies
    
-The movie files in saved in `movie/anivor`.
+The movie files in saved in `movies/`. You can see the movie with the following command.
 
+    ls movies/
+    mplayor movies/ani???.mp4
+    
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
    
