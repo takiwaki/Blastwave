@@ -45,7 +45,7 @@ Then preparation is done. Run the analyis.
     
 The output is saved in `output/`.
 ### 1D plots and animation.
-If you need 2D snapshots. 
+If you need 1D snapshots. 
     
     make 1Dsnaps
    
@@ -59,7 +59,10 @@ The movie files in saved in `movies/`. You can see the movie with the following 
     ls movies/
     mplayor movies/ani???.mp4
    
+### See energy conservation
 
+    display t-E.png
+    
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
    
