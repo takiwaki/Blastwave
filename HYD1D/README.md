@@ -67,6 +67,7 @@ The movie files in saved in `movies/`. You can see the movie with the following 
    
 ### See energy conservation
 
+    make t-E.png
     display t-E.png
     
 ### Do all of them
