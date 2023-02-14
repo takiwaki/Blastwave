@@ -32,7 +32,7 @@ The simulation data is saved in `bindata/`.
 GO to analysis server. Here ?? below is 09-14. To analyze the data, let us make `Analysis.x`.
     
     ssh <your account>@an??.cfca.nao.ac.jp
-    cd /cfca-work/<your account>/Blastwave/HYD2D/analysis .
+    cd /cfca-work/<your account>/Blastwave/HYD2D/analysis
     make Analysis.x
     
 Now you have many time-snapshots of data. To count it, use a script.
