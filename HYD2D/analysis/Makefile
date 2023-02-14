@@ -120,14 +120,19 @@ ${prtmovie}: MakeMovie.sh ${PRETPNG}
 # gnuplot
 #################
 
+1Dsnaps: ${DENPNG} ${VELPNG} ${PREPNG}
+
 ${DENPNG}: MakeSnap.sh radpro.plt ${RPR}
-	./MakeSnap.sh rpr radpro.plt
+        ./MakeSnap.sh rpr radpro.plt
 
 ${velPNG}: MakeSnap.sh radpro.plt ${RPR}
-	./MakeSnap.sh rpr radpro.plt
+        ./MakeSnap.sh rpr radpro.plt
 
 ${PREPNG}: MakeSnap.sh radpro.plt ${RPR}
-	./MakeSnap.sh rpr radpro.plt
+        ./MakeSnap.sh rpr radpro.plt
+
+2Dsnaps: ${DENTPNG} ${VELTPNG} ${PRETPNG}
+
 
 ${DENTPNG}: MakeSnap.sh rttpro.plt ${RPR}
 	./MakeSnap.sh rtp rttpro.plt
