@@ -50,7 +50,7 @@ If you need 1D snapshots, use the following command. Using `output/rpr*.dat` (Ra
     
     gnuplot radpro.plt
     ls figures/
-    display den00050.png
+    display figures/den00050.png
     
 All snapshots are made by the following command. 
     
