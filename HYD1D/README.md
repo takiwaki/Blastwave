@@ -42,7 +42,7 @@ Now you have many time-snapshots of data. To count it, use a script.
 See the file, `cat control.dat`. You can know the number of files.
 Then preparation is done. Run the analyis.
     
-    ./Analyis.x
+    ./Analysis.x
     
 The output is saved in `output/`.
 ### 1D plots and animation.
