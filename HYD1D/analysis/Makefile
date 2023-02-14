@@ -66,6 +66,8 @@ movies = ${denmovie} ${velmovie} ${premovie}
 
 timeevo=t-E.png
 
+timeradrho=t-r-rho.png
+
 ##########################################
 # Proceadures
 ##########################################
@@ -77,11 +79,20 @@ all: ${ana} ${movies} ${timeevo}
 ##########################################
 # Time evolution
 ##########################################
-${timeevo}: TimeEvolution.plt t-prof.dat
+${timeevo}: t-r-pro.plt t-prof.dat
 	gnuplot TimeEvolution.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
 	./MakeTimeseq.sh
+
+##########################################
+# Space time diagram
+##########################################
+${timeradrho}: t-r-pro.plt t-r-pro.dat
+	gnuplot t-r-pro.plt
+
+t-r-pro.dat: MakeTimeRad.sh ${RPR}
+	./MakeTimeRad.sh
 
 #################
 # ffmpeg
