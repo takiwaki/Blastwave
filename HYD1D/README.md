@@ -58,12 +58,12 @@ All snapshots are made by the following command.
    
 To make movie from the files. Type as follows.
 
-    make movies
+    make movie
    
 The movie files in saved in `movies/`. You can see the movie with the following command.
 
     ls movies/
-    mplayor movies/ani???.mp4
+    mplayer movies/ani???.mp4
    
 ### See energy conservation
 
