@@ -70,6 +70,11 @@ The movie files in saved in `movies/`. You can see the movie with the following 
     make t-E.png
     display t-E.png
     
+### Space Time Diagram
+
+    make t-r-rho.png
+    display t-r-rho.png
+    
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
    
