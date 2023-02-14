@@ -13,7 +13,7 @@ Then copy the source code.
 
     cd /cfca-work/<your account>
     cp -r /cfca-work/dos00/Blastwave .
-To run the code, you need to compile 'Simulation.f90'.
+To run the code, you need to compile `Simulation.f90`.
     
     cd Blastwave/HYD1D
     module load intel
