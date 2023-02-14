@@ -16,6 +16,7 @@ Then copy the source code.
 To run the code, you need to compile 'Simulation.f90'.
     
     cd Blastwave/HYD1D
+    
     make Simulation.x
     
 Then `Simulation.x`is made in this directory.
