@@ -18,7 +18,7 @@ echo " " > $outfile
 
 for n in $(seq ${fstnum} ${lstnum}); do
 file=`printf "./output/rpr%05d.dat\n" "${n}"`
-timev=`awk 'NR==1{print($2)}' ${file}`
+timev=`awk 'NR==1{print($3)}' ${file}`
 echo ${timev}
 
 awk 'NR>2{print('${timev}', $1, $2, $3, $4 )}' ${file} > ./temp.dat
