@@ -162,13 +162,15 @@ subroutine Visualize2D
   filename = trim(dirname)//filename
   open(unit2D,file=filename,status='replace',form='formatted')
 
-  write(unit2D,'(1a,4(1x,E12.3))') "#",time/year
+  write(unit2D,'(1a,a10,1(1x,E12.3))') "#"," time_yr=",time/year
 !                                    12345678    1234567890123   1234567890123   123456789012
+  write(unit2D,'(1a,2(1x,a7,i0))') "#"," Nrad= ",ie-is+1," Nthe= ",je-js+2
+
   write(unit2D,'(1a,5(1x,a13))') "#","1:r[pc] ","2:theta[rad] ","3:den[1/cm^3] ","4:p[erg/cm3] ","5:vel[km/s] "
 
   do j=js,je+1
   do i=is,ie
-     write(unit2D,'(1x,5(1x,E13.3))') x1b(i)/pc,x2a(j),d2d(i,j)/mu,p2d(i,j),v12d(i,j)/1.0d5
+     write(unit2D,'(1x,SP,5(1x,E13.3))') x1b(i)/pc,x2a(j),d2d(i,j)/mu,p2d(i,j),v12d(i,j)/1.0d5
   enddo
      write(unit2D,*)
   enddo
@@ -221,12 +223,12 @@ subroutine Visualize1D
   filename = trim(dirname)//filename
   open(unit1D,file=filename,status='replace',form='formatted')
 
-  write(unit1D,'(1a,4(1x,E12.3))') "#",time/year
+  write(unit1D,'(1a,a10,1(1x,E12.3))') "#"," time_yr=",time/year
 !                                    12345678   1234567890123     1234567890123   123456789012
   write(unit1D,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
 
   do i=is,ie
-     write(unit1D,'(1x,4(1x,E13.3))') x1b(i)/pc,d1d(i)/mu,p1d(i),v11d(i)/1.0d5
+     write(unit1D,'(1x,SP,4(1x,E13.3))') x1b(i)/pc,d1d(i)/mu,p1d(i),v11d(i)/1.0d5
   enddo
   close(unit1D)
 
