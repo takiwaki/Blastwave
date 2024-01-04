@@ -133,13 +133,13 @@ subroutine Visualize1D
   filename = trim(dirname)//filename
   open(unit1D,file=filename,status='replace',form='formatted')
 
-  write(unit1D,'(1a,4(1x,E12.3))') "#",time/year
+  write(unit1D,'(1a,a10,1(1x,E12.3))') "#"," time_yr=",time/year
 !                                    12345678   1234567890123     1234567890123   123456789012
   write(unit1D,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
   k=ks
   j=js
   do i=is,ie
-     write(unit1D,'(1x,4(1x,E13.3))') x1b(i)/pc,d(i,j,k)/mu,p(i,j,k),v1(i,j,k)/1.0d5
+     write(unit1D,'(1x,SP,4(1x,E13.3))') x1b(i)/pc,d(i,j,k)/mu,p(i,j,k),v1(i,j,k)/1.0d5
   enddo
   close(unit1D)
 
