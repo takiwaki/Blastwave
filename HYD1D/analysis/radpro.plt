@@ -39,6 +39,7 @@ set ylabel "Pressure [erg/cm^3]" offset 0,0
 plot  \
   ifnames u ($1):3 w l lw 6 \
 
+print "output ".ofname
 
 ##########################
 # density
@@ -52,6 +53,8 @@ set ylabel "Density [1/cm^3]" offset 0,0
 
 plot  \
   ifnames u ($1):2 w l lw 6 \
+
+print "output ".ofname
 
 ##########################
 # velocity
@@ -67,6 +70,7 @@ plot  \
   ifnames u ($1):4 w l lw 6 \
 
 
+print "output ".ofname
 
 
 reset
