@@ -1225,7 +1225,7 @@ end module eosmod
 
       write(filename,'(a3,i5.5,a4)')"bin",nout,".dat"
       filename = trim(dirname)//filename
-      open(unitbin,file=filename,status='replace',form='binary') 
+      open(unitbin,file=filename,status='replace',form='unformatted',access="stream") 
       write(unitbin) x1out(:,:)
       write(unitbin) x2out(:,:)
       write(unitbin) hydout(:,:,:,:)
