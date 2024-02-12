@@ -12,7 +12,8 @@ This is the instruction for spring school of division of science. First login th
 Then copy the source code.
 
     cd /cfca-work/<your account>
-    cp -r /cfca-work/dos00/Blastwave .
+    mkdir /cfca-work/<your account>
+    cp -r /cfca-work/dos04/Blastwave .
 To run the code, you need to compile `Simulation.f90`.
     
     cd Blastwave/HYD1D
