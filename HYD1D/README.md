@@ -81,3 +81,38 @@ To do all in one command, you just type `make` or `make all`.
    
       make all
       
+# How to change paramete
+You can change the number of numerical grid in  `module commons`.
+<pre>
+      integer,parameter::izones=200
+</pre>
+Also you can change the timescale and simulation region.
+<pre>
+      real(8),parameter:: timemax=2.0d3*year
+      real(8),parameter:: x1min=0.0d0,x1max=10.0d0*pc
+</pre>
+In `subroutine GenerateProblem`, you can find the following part.
+You can change the paramters as you like.
+
+<pre>
+      dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
+      write(6,*) "shell length [pc]",dr/pc
+
+! circum steller  medium
+      rho2 = 1.0d0*mu ! Intersteller medium 1 [1/cm^3]
+      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+      vel2 = 0.0d0
+
+! blast wave
+      vol  = (4.0*pi/3.0d0*dr**3)-(4.0*pi/3.0d0*x1min**3)
+      frac = 0.8d0
+      rho1 = (10.0d0*Msolar)/vol
+      eexp = frac*(1.0d51) ! erg
+      pre1 = eexp/vol*(gam-1.0d0)  
+      vel1 = sqrt((1.0d0-frac)*eexp/vol/rho1)
+
+      write(6,*) "Eex= ",frac   ,"[10^51 erg]"
+      write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
+      write(6,*) "vel= ",vel1   ,"[cm/s]"
+      write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
+</pre>
