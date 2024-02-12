@@ -80,7 +80,7 @@ all: ${ana} ${movies} ${timeevo}
 # Time evolution
 ##########################################
 ${timeevo}: t-r-pro.plt t-prof.dat
-	gnuplot TimeEvolution.plt
+	gnuplot t-E.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
 	./MakeTimeseq.sh
