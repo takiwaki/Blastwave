@@ -88,8 +88,8 @@ all: ${exe} ${movies} ${timefile}
 ##########################################
 # Time evolution
 ##########################################
-${timefile}: TimeEvolution.plt t-prof.dat
-	gnuplot TimeEvolution.plt
+${timefile}: t-E.plt t-prof.dat
+	gnuplot t-E.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
 	./MakeTimeseq.sh
