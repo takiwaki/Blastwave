@@ -83,7 +83,7 @@ all: ${ana} ${movies} ${timeevo}
 .PHONY: timeevolution
 timeevolution: ${timefile} ## time evolution 
 
-${timeevo}: t-r-pro.plt t-prof.dat
+${timeevo}: PlotTime.plt t-prof.dat
 	gnuplot PlotTime.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
@@ -92,8 +92,8 @@ t-prof.dat: MakeTimeseq.sh ${TOT}
 ##########################################
 # Space time diagram
 ##########################################
-${timeradrho}: t-r-pro.plt t-r-pro.dat
-	gnuplot t-r-pro.plt
+${timeradrho}: PlotTimeRad.plt t-r-pro.dat
+	gnuplot PlotTimeRad.plt
 
 t-r-pro.dat: MakeTimeRad.sh ${RPR}
 	./MakeTimeRad.sh

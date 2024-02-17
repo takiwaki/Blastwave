@@ -29,7 +29,11 @@ set palette defined ( 0 "white", 1.0 "white", 5.0 "black")
 set cbrange [*:10]
 set xrange [*:1000]
 set yrange [*:5]
-splot input  u 1:2:3 notitle \
+
+pc=3.085677581e18 
+year=60*60*24*365
+
+splot input  u ($1/year):($2/pc):3 notitle \
 
 ##########################################
 # Finalize
