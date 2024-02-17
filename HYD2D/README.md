@@ -49,7 +49,7 @@ The output is saved in `output/`.
 
 If you need 2D snapshots, use the following command. Using `output/twopro*.dat` (2D Profile), image files are made and save as `figures/*.png` (e.g., `dentwo00050.png`).
     
-    gnuplot rttpro.plt
+    gnuplot Plot2D.plt
     ls figures/
     display dentwo00050.png
     
