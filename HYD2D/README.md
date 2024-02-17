@@ -47,11 +47,11 @@ Then preparation is done. Run the analyis.
 The output is saved in `output/`.
 ### 2D plots and animation.
 
-If you need 2D snapshots, use the following command. Using `output/rtp*.dat` (Radial and Theta Pofile), image files are made and save as `figures/*.png` (e.g., `dnt00050.png`).
+If you need 2D snapshots, use the following command. Using `output/twopro*.dat` (2D Profile), image files are made and save as `figures/*.png` (e.g., `dentwo00050.png`).
     
     gnuplot rttpro.plt
     ls figures/
-    display dnt00050.png
+    display dentwo00050.png
     
 All snapshots are made by the following command. 
     
