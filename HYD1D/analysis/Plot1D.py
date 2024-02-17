@@ -7,12 +7,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 dir_path = "./output/"
+outputdatapath="./figures/"
+
+year = 60*60*24*365
+pc   = 3.085677581e18
 
 def Main():
+    import os
     global dir_path
-#    files=GetFileList()
-    files = [dir_path + "rpr00050.dat"]
-
+    files=GetFileList()
+    #files = [dir_path + "onepro00050.dat"]
+    os.makedirs(outputdatapath, exist_ok=True)
     is_initial = True
     for file in files:
         print(file)
@@ -25,7 +30,7 @@ def Main():
 
 def GetFileList():
     global dir_path
-    filenames= dir_path+"rpr*.dat"
+    filenames= dir_path+"onepro*.dat"
     files = glob.glob(filenames)
     files = sorted(files)
     return files
@@ -39,7 +44,8 @@ def ReadData(file):
         header= inputf.readline() # Read the fisrt line
         item= header.split()
         t = float(item[2])
-        print(t)
+        tyr = t/year
+        print("t="+str(tyr)+" year")
         inputf.close()
 
     except IOError:
@@ -54,7 +60,7 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   #######################################
   # Space Time diagram
   #######################################
-  outputdatapath="./figures/"
+  global outputdatapath
   fnameforfig="sans-serif"
   fsizeforfig=14
   fsizeforlabel=16
@@ -67,10 +73,11 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   plt.rcParams["ytick.minor.visible"] = True
   plt.rcParams['xtick.top'] = True
   plt.rcParams['ytick.right'] = True
-
+  time = time/year
+  rad  = rad/pc
   timetxt=r"$T=$"+str(time)+" [year]"
 
-  outputfile=outputdatapath+ "den"+ num +".png"
+  outputfile=outputdatapath+ "denone"+ num +".png"
   fig1 = plt.figure(figsize=(6,4.5))
   ax1 = fig1.add_subplot(1,1,1)
   ax1.plot(rad,rho,linewidth=2)
@@ -81,7 +88,7 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   print("output"+outputfile)
   fig1.savefig(outputfile)
 
-  outputfile=outputdatapath+ "pre"+ num +".png"
+  outputfile=outputdatapath+ "preone"+ num +".png"
   fig1 = plt.figure(figsize=(6,4.5))
   ax1 = fig1.add_subplot(1,1,1)
   ax1.plot(rad,pre,linewidth=2)
@@ -92,7 +99,7 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   print("output"+outputfile)
   fig1.savefig(outputfile)
 
-  outputfile=outputdatapath+ "vel"+ num +".png"
+  outputfile=outputdatapath+ "velone"+ num +".png"
   fig1 = plt.figure(figsize=(6,4.5))
   ax1 = fig1.add_subplot(1,1,1)
   ax1.plot(rad,vel,linewidth=2)
@@ -103,4 +110,5 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   print("output"+outputfile)
   fig1.savefig(outputfile)
 
-Main()
+if __name__ == "__main__":
+    Main()

@@ -7,19 +7,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 dir_path = "./output/"
-
+year = 60*60*24*365
+pc   = 3.085677581e18 
 def Main():
     global dir_path
     files=GetFileList()
-#    files = dir_path + "rpr00050.dat"
 
     is_initial = True
     for file in files:
         print(file)
         t,rad,rho = ReadData(file)
+        t = t/year
         nrad=len(rad)
         time = np.array([t*np.ones(nrad)]).T # horizontarl => vertical array
-    
+        rad  = rad/pc
         if (is_initial):
             timemin = t
             Xtd = np.empty((nrad,0),dtype=float)
@@ -35,7 +36,7 @@ def Main():
 
 def GetFileList():
     global dir_path
-    filenames= dir_path+"rpr*.dat"
+    filenames= dir_path+"onepro*.dat"
     files = glob.glob(filenames)
     files = sorted(files)
     return files
@@ -49,7 +50,8 @@ def ReadData(file):
         header= inputf.readline() # Read the fisrt line
         item= header.split()
         t = float(item[2])
-        print(t)
+        tyr = t/year
+        print("t="+str(tyr)+" year")
         inputf.close()
 
     except IOError:

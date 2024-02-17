@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 dir_path = "./output/"
-
+year= 60*60*24*365
 def Main():
     global dir_path
     files=GetFileList()
@@ -69,6 +69,7 @@ def PlotTimeEexp(time,Eexp):
   outputfile=outputdatapath+ "t-E.png"
   fig1 = plt.figure(figsize=(6,4.5))
   ax1 = fig1.add_subplot(1,1,1)
+  time = time/year
   ax1.plot(time,Eexp,linewidth=2)
   ax1.set_xlabel(r"$t\ [{\rm year}]$", fontsize=fsizeforlabel)
   ax1.set_ylabel(r"$E_{\rm exp}\ [{\rm erg}]$", fontsize=fsizeforlabel)
