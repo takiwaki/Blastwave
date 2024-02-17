@@ -161,7 +161,7 @@ clean: ## Delete intermediate files to compile
 	rm -f ${ana} *.o *.mod *~
 
 allclean: ## Delete data
-	rm -fr ${dirm} ${dirf}  ${dira} ${countfile}
+	rm -fr ${dirm} ${dirf}  ${dira} ${countfile} t-prof.dat t-r-pro.dat
 
 #################
 # help
