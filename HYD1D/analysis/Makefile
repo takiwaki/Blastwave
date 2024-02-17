@@ -1,5 +1,5 @@
 ##########################################
-# Makefile for Turbulence Studies
+# Makefile for Blastwave Analysis
 ##########################################
 
 ##########################################
@@ -11,9 +11,9 @@ ana=Analysis.x
 ######################	
 # complile options
 ######################
-fc=ifort -extend-source
-#fopt=-g -traceback -O2
-fopt=-g -traceback -check all -fpe0
+fc=ifort
+fopt=-g -traceback -O2
+#fopt=-g -traceback -check all -fpe0
 
 ##########################################
 # Timeseqencial data and figures
@@ -43,10 +43,11 @@ else
 endif
 
 # 1D radial profile
-RPR   = $(patsubst ${dird}/unf%.dat,${dira}/rpr%.dat,$(BIN))
-DENPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/den%.png,$(RPR))
-VELPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/vel%.png,$(RPR))
-PREPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/pre%.png,$(RPR))
+ONEPRO    = $(patsubst ${dird}/unf%.dat,${dira}/onepro%.dat,$(BIN))
+DENONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/denone%.png,$(ONEPRO))
+VELONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/velone%.png,$(ONEPRO))
+PREONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/preone%.png,$(ONEPRO))
+XCMONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/xcmone%.png,$(ONEPRO))
 
 # intgrated values 
 TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
@@ -55,11 +56,11 @@ TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
 # Movies
 ##########################################
 
-denmovie=${dirm}/aniden.mp4
-velmovie=${dirm}/anivel.mp4
-premovie=${dirm}/anipre.mp4
+denonemovie=${dirm}/anidenone.mp4
+velonemovie=${dirm}/anivelone.mp4
+preonemovie=${dirm}/anipreone.mp4
 
-movies = ${denmovie} ${velmovie} ${premovie}
+movies = ${denonemovie} ${velonemovie} ${preonemovie}
 ##########################################
 # Time evolution
 ##########################################
@@ -74,13 +75,16 @@ timeradrho=t-r-rho.png
 
 all: ${ana} ${movies} ${timeevo}
 
-.PHONY: all clean allclean
+.PHONY: all
 
 ##########################################
 # Time evolution
 ##########################################
+.PHONY: timeevolution
+timeevolution: ${timefile} ## time evolution 
+
 ${timeevo}: t-r-pro.plt t-prof.dat
-	gnuplot t-E.plt
+	gnuplot PlotTime.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
 	./MakeTimeseq.sh
@@ -97,44 +101,44 @@ t-r-pro.dat: MakeTimeRad.sh ${RPR}
 #################
 # ffmpeg
 #################
-
+.PHONY: movie
 movie: ${movies}
 
-${denmovie}: MakeMovie.sh ${DENPNG}
-	./MakeMovie.sh den
+${denonemovie}: MakeMovie.sh ${DENONEPNG}
+	./MakeMovie.sh denone
 
-${velmovie}: MakeMovie.sh ${VELPNG}
-	./MakeMovie.sh vel
+${velonemovie}: MakeMovie.sh ${VELONEPNG}
+	./MakeMovie.sh velone
 
-${premovie}: MakeMovie.sh ${PREPNG}
-	./MakeMovie.sh pre
+${preonemovie}: MakeMovie.sh ${PREONEPNG}
+	./MakeMovie.sh preone
 
 #################
 # gnuplot
 #################
+.PHONY: 1Dsnaps
+1Dsnaps: ${DENONEPNG} ${VELONEPNG} ${PREONEPNG} ## Make one-dimentional plot
 
-1Dsnaps: ${DENPNG} ${velPNG} ${PREPNG}
+${DENONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
+	./MakeSnap.sh onepro Plot1D.plt
 
-${DENPNG}: MakeSnap.sh radpro.plt ${RPR}
-	./MakeSnap.sh rpr radpro.plt
+${VELONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
+	./MakeSnap.sh onepro Plot1D.plt
 
-${velPNG}: MakeSnap.sh radpro.plt ${RPR}
-	./MakeSnap.sh rpr radpro.plt
-
-${PREPNG}: MakeSnap.sh radpro.plt ${RPR}
-	./MakeSnap.sh rpr radpro.plt
-
+${PREONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
+	./MakeSnap.sh onepro Plot1D.plt
 
 #################
 # analysis
 #################
+run: ${ONEPRO} ## run the analysis
 
-count-number: ${countfile}
+count-number: ${countfile} ## count bin files to prepare the analysis
 
 ${countfile}: CountBindata.sh
 	./CountBindata.sh
 
-${RPR}: ${ana} ${BIN} ${countfile}
+${ONEPRO}: ${ana} ${BIN} ${countfile}
 	./${ana}
 
 ${TOT}: ${ana} ${BIN} ${countfile}
@@ -144,14 +148,24 @@ ${TOT}: ${ana} ${BIN} ${countfile}
 # analysis
 #################
 
+build: ${ana} ## Compile the analyis code
+
 ${ana}: Analysis.f90
 	${fc} ${fopt} $< -o ${ana}
 
 #################
 # clean up
 #################
-clean:
+.PHONY: clean allclean
+clean: ## Delete intermediate files to compile
 	rm -f ${ana} *.o *.mod *~
 
-allclean:
-	rm -fr ${dirm} ${dirf} ${dira} ${countfile} ${timeevo}
+allclean: ## Delete data
+	rm -fr ${dirm} ${dirf}  ${dira} ${countfile}
+
+#################
+# help
+#################
+.PHONY: help
+help: ## Display this help screen
+	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

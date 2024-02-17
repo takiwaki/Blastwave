@@ -129,17 +129,17 @@ subroutine Visualize1D
      is_inited = .true.
   endif
 
-  write(filename,'(a3,i5.5,a4)')"rpr",incr,".dat"
+  write(filename,'(a6,i5.5,a4)')"onepro",incr,".dat"
   filename = trim(dirname)//filename
   open(unit1D,file=filename,status='replace',form='formatted')
 
-  write(unit1D,'(1a,a10,1(1x,E12.3))') "#"," time_yr=",time/year
-!                                    12345678   1234567890123     1234567890123   123456789012
-  write(unit1D,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
+  write(unit1D,'(1a,a7,1(1x,E12.3))') "#","  time=",time
+!                                     1234567890123   1234567890123   1234567890123   1234567890123
+  write(unit1D,'(1a,4(1x,a13))') "#","1:r[cm]      ","2:den[1/cm^3]","3:p[erg/cm3] ","4:vel[cm/s]  "
   k=ks
   j=js
   do i=is,ie
-     write(unit1D,'(1x,SP,4(1x,E13.3))') x1b(i)/pc,d(i,j,k)/mu,p(i,j,k),v1(i,j,k)/1.0d5
+     write(unit1D,'(1x,SP,4(1x,E13.3))') x1b(i),d(i,j,k)/mu,p(i,j,k),v1(i,j,k)
   enddo
   close(unit1D)
 
@@ -182,7 +182,7 @@ subroutine Integration
 !                                    12345678   1234567890123     1234567890123   123456789012
 !  write(unittot,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
 
-  write(unittot,'(1x,4(1x,E13.3))') time/year,Etot
+  write(unittot,'(1x,4(1x,E13.3))') time,Etot
   close(unittot)
 
   return
