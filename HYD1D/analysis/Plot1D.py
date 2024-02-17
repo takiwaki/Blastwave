@@ -17,7 +17,8 @@ def Main():
     global dir_path
     files=GetFileList()
     #files = [dir_path + "onepro00050.dat"]
-    os.makedirs(outputdatapath, exist_ok=True)
+
+    mkdir(outputdatapath)
     is_initial = True
     for file in files:
         print(file)
@@ -27,6 +28,11 @@ def Main():
         fileindex = match.group()
 
         PlotRadData(fileindex,time,rad,rho,pre,vel)
+
+def mkdir(path):
+    import os
+    if not os.path.isdir(path):
+        os.makedirs(path)
 
 def GetFileList():
     global dir_path
