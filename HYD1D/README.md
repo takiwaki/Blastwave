@@ -2,14 +2,16 @@
 
 [Go to top](../README.md)  
 
-## How to run
+## How to run and analyse
 
-### compile 
-This is the instruction for spring school of division of science. First login the server, more.
+This is the instruction for spring school of division of science.
+
+### login and go to work directory 
+First login the server, more.
 
     ssh <your account>@more.cfca.nao.ac.jp
     
-Then go to work directry.
+Then go to work directory.
 
     mkdir /cfca-work/<your account>
     cd /cfca-work/<your account>
@@ -18,7 +20,7 @@ Copy the programs.
     
     cp -r /cfca-work/dos04/Blastwave .
    
-
+### compile 
 To run the code, you need to compile `Simulation.f90`.
     
     cd Blastwave/HYD1D
@@ -39,8 +41,7 @@ GO to analysis server. Here ?? below is 09-14. To analyze the data, let us make 
     
     ssh <your account>@an??.cfca.nao.ac.jp
 
-Then go to work directry.
-
+Then go to work directory.
     
     cd /cfca-work/<your account>/Blastwave/HYD1D/analysis
     make Analysis.x
@@ -61,6 +62,12 @@ If you need 1D snapshots, use the following command. Using `output/onepro*.dat` 
     gnuplot Plot1D.plt
     ls figures/
     display figures/denone00050.png
+
+Compare the figure with the following one.
+
+    gnuplot
+    gnuplot> plot "output/onepro00050.dat" u 1:2 w l
+    
     
 All snapshots are made by the following command. 
     
@@ -84,6 +91,11 @@ The movie files in saved in `movies/`. You can see the movie with the following 
 
     make t-r-rho.png
     display t-r-rho.png
+
+    gnuplot
+    gnuplot> set view map
+    gnuplot> splot "t-r-pro.dat" u 1:2:3 w pm3d
+    
     
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
