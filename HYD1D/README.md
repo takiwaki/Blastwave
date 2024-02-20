@@ -81,7 +81,7 @@ To do all in one command, you just type `make` or `make all`.
    
       make all
       
-# How to change paramete
+# How to change parameter
 You can change the number of numerical grid in  `module commons`.
 <pre>
       integer,parameter::izones=200
