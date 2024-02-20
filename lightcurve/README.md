@@ -13,7 +13,7 @@ Then copy the source code.
 
     cp -r /cfca-work/dos04/lightcurve .
 
-To run the code, you need to compile `Simulation.f90`.
+To run the code, you need to compile.
     
     module load intel
     ifort lightcurve.f90
@@ -31,4 +31,9 @@ See the result.
     gnuplot
     plot "lightcurve.dat"
 
+### Annotation
+To make a figure.
+
+    gnuplot lc.plt
+    display lightcurve.png
     
