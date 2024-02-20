@@ -91,11 +91,12 @@ The movie files in saved in `movies/`. You can see the movie with the following 
 
     make t-r-rho.png
     display t-r-rho.png
+    
+Compare the figure with the following one.
 
     gnuplot
     gnuplot> set view map
     gnuplot> splot "t-r-pro.dat" u 1:2:3 w pm3d
-    
     
 ### Do all of them
 To do all in one command, you just type `make` or `make all`.
