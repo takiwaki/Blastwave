@@ -11,7 +11,7 @@ ana=Analysis.x
 ######################	
 # complile options
 ######################
-fc=ifort -extend-source
+fc=ifort
 #fopt=-g -traceback -O2
 fopt=-g -traceback -check all -fpe0
 
@@ -43,15 +43,15 @@ else
 endif
 
 # 1D radial profile
-RPR   = $(patsubst ${dird}/unf%.dat,${dira}/rpr%.dat,$(BIN))
-DENPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/den%.png,$(RPR))
-VELPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/vel%.png,$(RPR))
-PREPNG= $(patsubst ${dira}/rpr%.dat,${dirf}/pre%.png,$(RPR))
+ONEPRO    = $(patsubst ${dird}/unf%.dat,${dira}/onepro%.dat,$(BIN))
+DENONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/denone%.png,$(ONEPRO))
+VELONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/velone%.png,$(ONEPRO))
+PREONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/preone%.png,$(ONEPRO))
 
-RTP    = $(patsubst ${dird}/unf%.dat,${dira}/rtp%.dat,$(BIN))
-DENTPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/dnt%.png,$(RTP))
-VELTPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/vlt%.png,$(RTP))
-PRETPNG= $(patsubst ${dira}/rtp%.dat,${dirf}/prt%.png,$(RTP))
+TWOPRO    = $(patsubst ${dird}/unf%.dat,${dira}/twopro%.dat,$(BIN))
+DENTWOPNG = $(patsubst ${dira}/twopro%.dat,${dirf}/dentwo%.png,$(TWOPRO))
+VELTWOPNG = $(patsubst ${dira}/twopro%.dat,${dirf}/veltwo%.png,$(TWOPRO))
+PRETWOPNG = $(patsubst ${dira}/twopro%.dat,${dirf}/pretwo%.png,$(TWOPRO))
 
 # intgrated values 
 TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
@@ -83,13 +83,16 @@ timefile=t-E.png
 
 all: ${exe} ${movies} ${timefile}
 
-.PHONY: all clean allclean
+.PHONY: all
 
 ##########################################
 # Time evolution
 ##########################################
-${timefile}: TimeEvolution.plt t-prof.dat
-	gnuplot TimeEvolution.plt
+.PHONY: timeevolution
+timeevolution: ${timefile} ## time evolution 
+
+${timefile}: t-E.plt t-prof.dat
+	gnuplot t-E.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
 	./MakeTimeseq.sh
@@ -97,62 +100,63 @@ t-prof.dat: MakeTimeseq.sh ${TOT}
 #################
 # ffmpeg
 #################
+.PHONY: movie
+movie: ${movies} ## Make movie
 
-movie: ${movies}
+${denonemovie}: MakeMovie.sh ${DENONEPNG}
+	./MakeMovie.sh denone
+${velonemovie}: MakeMovie.sh ${VELONEPNG}
+	./MakeMovie.sh velone
+${preonemovie}: MakeMovie.sh ${PREONEPNG}
+	./MakeMovie.sh preone
 
-${denmovie}: MakeMovie.sh ${DENPNG}
-	./MakeMovie.sh den
-
-${velmovie}: MakeMovie.sh ${VELPNG}
-	./MakeMovie.sh vel
-
-${premovie}: MakeMovie.sh ${PREPNG}
-	./MakeMovie.sh pre
-
-${dntmovie}: MakeMovie.sh ${DENTPNG}
-	./MakeMovie.sh dnt
-${vltmovie}: MakeMovie.sh ${VELTPNG}
-	./MakeMovie.sh vlt
-${prtmovie}: MakeMovie.sh ${PRETPNG}
-	./MakeMovie.sh prt
+${dentwomovie}: MakeMovie.sh ${DENTWOPNG}
+	./MakeMovie.sh dentwo
+${veltwomovie}: MakeMovie.sh ${VELTWOPNG}
+	./MakeMovie.sh veltwo
+${pretwomovie}: MakeMovie.sh ${PRETWOPNG}
+	./MakeMovie.sh pretwo
 
 #################
 # gnuplot
 #################
 
-1Dsnaps: ${DENPNG} ${VELPNG} ${PREPNG}
+.PHONY: 1Dsnaps 2Dsnaps
+1Dsnaps: ${DENPNG} ${VELPNG} ${PREPNG} ## Make one-dimensional plot
 
-${DENPNG}: MakeSnap.sh radpro.plt ${RPR}
-        ./MakeSnap.sh rpr radpro.plt
+${DENONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
+	./MakeSnap.sh onepro Plot1D.plt
 
-${velPNG}: MakeSnap.sh radpro.plt ${RPR}
-        ./MakeSnap.sh rpr radpro.plt
+${VELONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
+	./MakeSnap.sh onepro Plot1D.plt
 
-${PREPNG}: MakeSnap.sh radpro.plt ${RPR}
-        ./MakeSnap.sh rpr radpro.plt
+${PREONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
+	./MakeSnap.sh onepro Plot1D.plt
 
-2Dsnaps: ${DENTPNG} ${VELTPNG} ${PRETPNG}
+2Dsnaps: ${DENTWOPNG} ${XCMTWOPNG}  ## Make two-dimensional plot
 
+${DENTWOPNG}: MakeSnap.sh Plot2D.plt ${TWOPRO}
+	./MakeSnap.sh twopro Plot2D.plt
+${VELTWOPNG}: MakeSnap.sh rttpro.plt ${TWOPRO}
+	./MakeSnap.sh twopro rttpro.plt
 
-${DENTPNG}: MakeSnap.sh rttpro.plt ${RPR}
-	./MakeSnap.sh rtp rttpro.plt
-
-${VELTPNG}: MakeSnap.sh rttpro.plt ${RPR}
-	./MakeSnap.sh rtp rttpro.plt
-
-${PRETPNG}: MakeSnap.sh rttpro.plt ${RPR}
-	./MakeSnap.sh rtp rttpro.plt
+${PRETWOPNG}: MakeSnap.sh rttpro.plt ${TWOPRO}
+	./MakeSnap.sh twopro rttpro.plt
 
 #################
 # analysis
 #################
+run: ${ONEPRO} ${TWOPRO} ## run the analysis
 
 count-number: ${countfile}
 
 ${countfile}: CountBindata.sh
 	./CountBindata.sh
 
-${RPR}: ${ana} ${BIN} ${countfile}
+${ONEPRO}: ${ana} ${BIN} ${countfile}
+	./${ana}
+
+${TWOPRO}: ${ana} ${BIN} ${countfile}
 	./${ana}
 
 ${TOT}: ${ana} ${BIN} ${countfile}
@@ -161,6 +165,7 @@ ${TOT}: ${ana} ${BIN} ${countfile}
 #################
 # simulation
 #################
+build: ${ana} ## Compile the analyis code
 
 ${ana}: Analysis.f90
 	${fc} ${fopt} $< -o ${ana}
@@ -169,8 +174,13 @@ ${ana}: Analysis.f90
 #################
 # clean up
 #################
+.PHONY: clean allclean
 clean:
 	rm -f  ${ana} *.o *.mod *~
 
 allclean:
 	rm -fr ${dirm} ${dirf} ${dira} ${countfile}
+
+.PHONY: help
+help: ## Display this help screen
+	@grep -E '^[1-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

@@ -1,5 +1,5 @@
 ##########################################
-# Makefile for Turbulence Studies
+# Makefile for Blastwave Simulations
 ##########################################
 
 ##########################################
@@ -11,9 +11,9 @@ exe=Simulation.x
 ######################	
 # complile options
 ######################
-fc=ifort -extend-source
-#fopt=-g -traceback -O2
-fopt=-g -traceback -check all -fpe0
+fc=ifort
+fopt=-g -traceback -O2
+#fopt=-g -traceback -check all -fpe0
 
 ##########################################
 # Timeseqencial data and figures
@@ -28,12 +28,8 @@ dird := bindata
 #################
 # simulation
 #################
-
-${BIN}: ${exe}
-	./${exe}
-
-${ana}: Analysis.f90
-	${fc} ${fopt} $< -o ${ana}
+.PHONY: compile
+compile: ${exe} ## Compile the prgram
 
 ${exe}: Simulation.f90
 	${fc} ${fopt} $< -o ${exe}
@@ -41,5 +37,10 @@ ${exe}: Simulation.f90
 #################
 # clean up
 #################
+.PHONY: clean
 clean:
 	rm -f ${exe} *.o *.mod *~
+
+.PHONY: help
+help: ## Display this help screen
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

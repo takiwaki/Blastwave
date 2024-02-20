@@ -44,7 +44,7 @@ if(flag ne "0") print ifnames." not found"; quit
 # Extract Time
 print  ifnames." found"
 
-command = sprintf(" head -n 1 %s | sed 's/#//' ",ifnames)
+command = sprintf(" head -n 1 %s | sed 's/#  time_yr=//' ",ifnames)
 time   = system(command)
 timetxt = "time=".time." yr"
 print timetxt
