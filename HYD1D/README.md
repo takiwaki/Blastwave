@@ -49,7 +49,7 @@ The output is saved in `output/`.
 ### 1D plots and animation.
 If you need 1D snapshots, use the following command. Using `output/onepro*.dat` (1DProfile), image files are made and save as `figures/*.png` (e.g., `denone00050.png`).
     
-    gnuplot radpro.plt
+    gnuplot Plot1D.plt
     ls figures/
     display figures/denone00050.png
     
