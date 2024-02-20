@@ -19,8 +19,11 @@ set style line 10 lt 1 lw 6 lc rgb "black" #
 input="lightcurve.dat"
 outputfile= "lightcurve.png"
 
+
+print "reading ".input
+
 if(pngflag==1) set output outputfile
-if(pngflag==1) print "drawing".outputfile
+if(pngflag==1) print "drawing ".outputfile
 
 set xlabel "t [day]"
 set ylabel "L [erg/s]"
