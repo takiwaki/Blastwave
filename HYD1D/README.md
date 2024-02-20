@@ -104,7 +104,14 @@ To do all in one command, you just type `make` or `make all`.
       make all
       
 # How to change parameter
-You can change the number of numerical grid in  `module commons`.
+Let us try to change the parameters. Before change it. Change the name of the previous directory.
+
+    cd ../..
+    mv HYD1D HYD1D-model1
+    cp -r /cfca-work/dos04/Blastwave/HYD1D .
+    cd HYD1D
+
+You can change the number of numerical grid in `module commons` in `Simulation.f90`.
 <pre>
       integer,parameter::izones=200
 </pre>
