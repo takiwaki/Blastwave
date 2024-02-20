@@ -41,7 +41,7 @@
 
       real(8),dimension(in,jn,kn)::d,et,mv1,mv2,mv3
       real(8),dimension(in,jn,kn)::p,ei,v1,v2,v3,cs
-      real(8),dimension(in,jn,kn)::gp,gp1a,gp2a
+      real(8),dimension(in,jn,kn)::gp,gp1a
 
 
       end module commons
@@ -135,25 +135,31 @@ end module eosmod
       real(8):: dr
       real(8):: pi
       real(8):: frac,eexp,vol
+      real(8):: Mejecta, EexpThermal,EexpKinetic,RhoMedium, TMedium
 
       pi =acos(-1.0d0)
       dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
       write(6,*) "shell length [pc]",dr/pc
 
-! circum steller  medium
-      rho2 = 1.0d0*mu ! Intersteller medium 1 [1/cm^3]
-      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+! parameters
+      Mejecta = 10.0d0 ! M_sun
+      EexpThermal = 0.8 ! 10^51 erg
+      EexpKinetic = 0.2 ! 10^51 erg
+      RhoMedium   = 1.0 ! 1/cm^3
+      TMedium     = 1.0d4 ! 10^4 [K]
+! circum stellar  medium
+      rho2 = RhoMedium * mu ! Interstellar medium 1 [g/cm^3]
+      pre2 = rho2* kbol * Tmedium
       vel2 = 0.0d0
 
-! blast wave
-      vol  = (4.0*pi/3.0d0*dr**3)-(4.0*pi/3.0d0*x1min**3)
-      frac = 0.8d0
-      rho1 = (10.0d0*Msolar)/vol
-      eexp = frac*(1.0d51) ! erg
-      pre1 = eexp/vol*(gam-1.0d0)  
-      vel1 = sqrt((1.0d0-frac)*eexp/vol/rho1)
+! blastwave
+      vol  = (4.0*pi/3.0d0*dr**3)-(4.0*pi/3.0d0*x1min**3) ! cm^3
+      rho1 = (Mejecta*Msolar)/vol ! g/cm^3
+      eexp = EexpThermal*(1.0d51) ! erg
+      pre1 = eexp/vol*(gam-1.0d0) ! erg/cm^3
+      vel1 = sqrt(EexpKinetic*1.0d51/vol/rho1) ! cm/s
 
-      write(6,*) "Eex= ",frac   ,"[10^51 erg]"
+      write(6,*) "Eex= ",eexp/1.0d51,"[10^51 erg]"
       write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
       write(6,*) "vel= ",vel1   ,"[cm/s]"
       write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
@@ -779,23 +785,7 @@ end module eosmod
       enddo
       enddo
       enddo
-
-      do k=ks,ke
-      do i=is,ie
-      do j=js,je+1
-         gp2a(i  ,j,k) = gp(i,j,k) &
-     & - 0.5d0*(gp(i  ,j,k)-gp(i,j-1,k))
-
-         gp2a(i,j+1,k) = gp(i,j,k) &
-     & + 0.5d0*(gp(i,j+1,k)-gp(i  ,j,k))
-
-       grvsrc2(i,j,k) = (gp2a(i,j+1,k)-gp2a(i,j,k))/(x2a(j+1)-x2a(j))*d(i,j,k)
-
-      enddo
-      enddo
-      enddo
-
-       grvsrc3(:,:,:) = 0.0d0
+      
 
       return
       end subroutine  GravForce
