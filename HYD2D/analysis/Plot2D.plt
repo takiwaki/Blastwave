@@ -32,7 +32,7 @@ if (exist("ifnum")==0 ) ifnum=50
 
 print ifnum
 # Scalar
-ifnames = sprintf("output/rtp%05d.dat",ifnum)
+ifnames = sprintf("output/twopro%05d.dat",ifnum)
 
 # Stop Ploting
 command = sprintf("ls %s 1> /dev/null 2> /dev/null ; echo $? ",ifnames)
@@ -44,10 +44,14 @@ if(flag ne "0") print ifnames." not found"; quit
 # Extract Time
 print  ifnames." found"
 
-command = sprintf(" head -n 1 %s | sed 's/#  time_yr=//' ",ifnames)
+command = sprintf("awk 'NR==1 {print $3}' %s",ifnames)
 time   = system(command)
-timetxt = "time=".time." yr"
-print timetxt
+time = time + 0.0
+year=60*60*24*365
+time = time/year
+timeunit=" year"
+timetxt = sprintf("%g",time).timeunit
+print "time=".timetxt
 
 # Showing Time
 set label timetxt at screen 0.65, screen 0.85
@@ -78,6 +82,7 @@ set size 1.0
 unset origin
 
 
+pc=3.085677581e18 
 # vertical and horizontal axis
 set origin 0.0,0.0
 set xlabel "X [pc]" offset 0,0
@@ -102,33 +107,33 @@ set cbtics offset 0,3.2
 
 
 # Density
-ofname = sprintf("figures/dnt%05d.png",ifnum)
+ofname = sprintf("figures/dentwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
 
 
 splot [-srange:srange][-srange:srange] \
-  ifnames u ( $1*sin($2)):($1*cos($2)):($1<srange?($3):NaN) w pm3d \
-, ifnames u (-$1*sin($2)):($1*cos($2)):($1<srange?($3):NaN) w pm3d \
+  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($3):NaN) w pm3d \
+, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($3):NaN) w pm3d \
 
 
 # Pressure
-ofname = sprintf("figures/prt%05d.png",ifnum)
+ofname = sprintf("figures/pretwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
 
 splot [-srange:srange][-srange:srange] \
-  ifnames u ( $1*sin($2)):($1*cos($2)):($1<srange?($4):NaN) w pm3d \
-, ifnames u (-$1*sin($2)):($1*cos($2)):($1<srange?($4):NaN) w pm3d \
+  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($4):NaN) w pm3d \
+, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($4):NaN) w pm3d \
 
 # Velocity
-ofname = sprintf("figures/vlt%05d.png",ifnum)
+ofname = sprintf("figures/veltwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
 
 splot [-srange:srange][-srange:srange] \
-  ifnames u ( $1*sin($2)):($1*cos($2)):($1<srange?($5):NaN) w pm3d \
-, ifnames u (-$1*sin($2)):($1*cos($2)):($1<srange?($5):NaN) w pm3d \
+  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($5):NaN) w pm3d \
+, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($5):NaN) w pm3d \
 
 
 unset label
