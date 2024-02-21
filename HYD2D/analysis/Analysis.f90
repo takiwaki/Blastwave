@@ -158,19 +158,19 @@ subroutine Visualize2D
   enddo
 
 
-  write(filename,'(a3,i5.5,a4)')"rtp",incr,".dat"
+  write(filename,'(a6,i5.5,a4)')"twopro",incr,".dat"
   filename = trim(dirname)//filename
   open(unit2D,file=filename,status='replace',form='formatted')
 
-  write(unit2D,'(1a,a10,1(1x,E12.3))') "#"," time_yr=",time/year
+  write(unit2D,'(1a,a6,1(1x,E12.3))') "#"," time=",time
 !                                    12345678    1234567890123   1234567890123   123456789012
   write(unit2D,'(1a,2(1x,a7,i0))') "#"," Nrad= ",ie-is+1," Nthe= ",je-js+2
 
-  write(unit2D,'(1a,5(1x,a13))') "#","1:r[pc] ","2:theta[rad] ","3:den[1/cm^3] ","4:p[erg/cm3] ","5:vel[km/s] "
+  write(unit2D,'(1a,5(1x,a13))') "#","1:r[cm] ","2:theta[rad] ","3:den[1/cm^3] ","4:p[erg/cm3] ","5:vel[cm/s] "
 
   do j=js,je+1
   do i=is,ie
-     write(unit2D,'(1x,SP,5(1x,E13.3))') x1b(i)/pc,x2a(j),d2d(i,j)/mu,p2d(i,j),v12d(i,j)/1.0d5
+     write(unit2D,'(1x,SP,5(1x,E13.3))') x1b(i),x2a(j),d2d(i,j)/mu,p2d(i,j),v12d(i,j)
   enddo
      write(unit2D,*)
   enddo
@@ -219,16 +219,16 @@ subroutine Visualize1D
      v11d(i) = v11d(i)/sum(dvl2a(:))
   enddo
 
-  write(filename,'(a3,i5.5,a4)')"rpr",incr,".dat"
+  write(filename,'(a6,i5.5,a4)')"onepro",incr,".dat"
   filename = trim(dirname)//filename
   open(unit1D,file=filename,status='replace',form='formatted')
 
-  write(unit1D,'(1a,a10,1(1x,E12.3))') "#"," time_yr=",time/year
-!                                    12345678   1234567890123     1234567890123   123456789012
-  write(unit1D,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
+  write(unit1D,'(1a,a6,1(1x,E12.3))') "#"," time=",time
+!                                     1234567890123   1234567890123   1234567890123   1234567890123
+  write(unit1D,'(1a,4(1x,a13))') "#","1:r[cm]      ","2:den[1/cm^3]","3:p[erg/cm3] ","4:vel[cm/s]  "
 
   do i=is,ie
-     write(unit1D,'(1x,SP,4(1x,E13.3))') x1b(i)/pc,d1d(i)/mu,p1d(i),v11d(i)/1.0d5
+     write(unit1D,'(1x,SP,4(1x,E13.3))') x1b(i),d1d(i)/mu,p1d(i),v11d(i)
   enddo
   close(unit1D)
 
@@ -264,7 +264,7 @@ subroutine Integration
   enddo
   enddo
 
-  write(filename,'(a3,i5.5,a4)')"tot",incr,".dat"
+  write(filename,'(a6,i5.5,a4)')"timpro",incr,".dat"
   filename = trim(dirname)//filename
   open(unittot,file=filename,status='replace',form='formatted')
 
@@ -272,7 +272,7 @@ subroutine Integration
 !                                    12345678   1234567890123     1234567890123   123456789012
 !  write(unittot,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
 
-  write(unittot,'(1x,4(1x,E13.3))') time/year,Etot
+  write(unittot,'(1x,4(1x,E13.3))') time,Etot
   close(unittot)
 
   return
