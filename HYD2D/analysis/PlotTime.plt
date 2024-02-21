@@ -29,9 +29,9 @@ set xlabel "Time [year]"
 set log x
 
 set ylabel "Explosion energy [erg]"
-
+year=60*60*24*365
 plot NaN notitle \
-, input  u 1:2  notitle "Explosion energy" w l ls 1  \
+, input  u ($1/year):2  notitle "Explosion energy" w l ls 1  \
 
 reset
-set term pop
+if(pngflag==1)set term pop
