@@ -52,6 +52,11 @@ If you need 2D snapshots, use the following command. Using `output/twopro*.dat` 
     gnuplot Plot2D.plt
     ls figures/
     display figures/dentwo00050.png
+
+Compare the figure with the following one.
+
+    gnuplot
+    gnuplot> splot "output/twopro00050.dat" u 1:2:3 w l
     
 All snapshots are made by the following command. 
     
