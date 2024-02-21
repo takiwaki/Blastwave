@@ -60,16 +60,15 @@ TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
 # Movies
 ##########################################
 
-denmovie=${dirm}/aniden.mp4
-velmovie=${dirm}/anivel.mp4
-premovie=${dirm}/anipre.mp4
+denonemovie=${dirm}/anidenone.mp4
+velonemovie=${dirm}/anivelone.mp4
+preonemovie=${dirm}/anipreone.mp4
 
-dntmovie=${dirm}/anidnt.mp4
-vltmovie=${dirm}/anivlt.mp4
-prtmovie=${dirm}/aniprt.mp4
+dentwomovie=${dirm}/anidentwo.mp4
+veltwomovie=${dirm}/aniveltwo.mp4
+pretwomovie=${dirm}/anipretwo.mp4
 
-#movies = ${denmovie} ${velmovie} ${premovie} ${dntmovie}
-movies = ${vltmovie} ${prtmovie} ${dntmovie}
+movies = ${denonemovie} ${velonemovie} ${preonemovie} ${dentwomovie} ${veltwomovie} ${pretwomovie} 
 
 ##########################################
 # Time evolution
@@ -91,8 +90,8 @@ all: ${exe} ${movies} ${timefile}
 .PHONY: timeevolution
 timeevolution: ${timefile} ## time evolution 
 
-${timefile}: t-E.plt t-prof.dat
-	gnuplot t-E.plt
+${timefile}: PlotTime.plt t-prof.dat
+	gnuplot PlotTime.plt
 
 t-prof.dat: MakeTimeseq.sh ${TOT}
 	./MakeTimeseq.sh
@@ -122,7 +121,7 @@ ${pretwomovie}: MakeMovie.sh ${PRETWOPNG}
 #################
 
 .PHONY: 1Dsnaps 2Dsnaps
-1Dsnaps: ${DENPNG} ${VELPNG} ${PREPNG} ## Make one-dimensional plot
+1Dsnaps: ${DENONEPNG} ${VELONEPNG} ${PREONEPNG} ## Make one-dimensional plot
 
 ${DENONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
 	./MakeSnap.sh onepro Plot1D.plt
@@ -133,22 +132,22 @@ ${VELONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
 ${PREONEPNG}: MakeSnap.sh Plot1D.plt ${ONEPRO}
 	./MakeSnap.sh onepro Plot1D.plt
 
-2Dsnaps: ${DENTWOPNG} ${XCMTWOPNG}  ## Make two-dimensional plot
+2Dsnaps: ${DENTWOPNG} ${VELTWOPNG} ${PRETWOPNG}  ## Make two-dimensional plot
 
 ${DENTWOPNG}: MakeSnap.sh Plot2D.plt ${TWOPRO}
 	./MakeSnap.sh twopro Plot2D.plt
-${VELTWOPNG}: MakeSnap.sh rttpro.plt ${TWOPRO}
-	./MakeSnap.sh twopro rttpro.plt
+${VELTWOPNG}: MakeSnap.sh Plot2D.plt ${TWOPRO}
+	./MakeSnap.sh twopro Plot2D.plt
 
-${PRETWOPNG}: MakeSnap.sh rttpro.plt ${TWOPRO}
-	./MakeSnap.sh twopro rttpro.plt
+${PRETWOPNG}: MakeSnap.sh Plot2D.plt ${TWOPRO}
+	./MakeSnap.sh twopro Plot2D.plt
 
 #################
 # analysis
 #################
 run: ${ONEPRO} ${TWOPRO} ## run the analysis
 
-count-number: ${countfile}
+count-number: ${countfile} ## count bin files to prepare the analysis
 
 ${countfile}: CountBindata.sh
 	./CountBindata.sh
@@ -165,7 +164,7 @@ ${TOT}: ${ana} ${BIN} ${countfile}
 #################
 # simulation
 #################
-build: ${ana} ## Compile the analyis code
+build: ${ana} ## Compile the analysis code
 
 ${ana}: Analysis.f90
 	${fc} ${fopt} $< -o ${ana}
@@ -175,12 +174,12 @@ ${ana}: Analysis.f90
 # clean up
 #################
 .PHONY: clean allclean
-clean:
+clean: ## Delete intermediate files to compile
 	rm -f  ${ana} *.o *.mod *~
 
-allclean:
+allclean: ## Delete data
 	rm -fr ${dirm} ${dirf} ${dira} ${countfile}
 
 .PHONY: help
 help: ## Display this help screen
-	@grep -E '^[1-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
