@@ -56,7 +56,8 @@ If you need 2D snapshots, use the following command. Using `output/twopro*.dat` 
 Compare the figure with the following one.
 
     gnuplot
-    gnuplot> splot "output/twopro00050.dat" u 1:2:3 w l
+    gnuplot> set view map
+    gnuplot> splot "output/twopro00050.dat" u 1:2:3 w pm3d
     
 All snapshots are made by the following command. 
     
