@@ -13,7 +13,7 @@
       use unitsmod
       implicit none
       integer::nhy
-      integer,parameter::nhymax=100000
+      integer,parameter::nhymax=1000000
       real(8)::time,dt
       real(8),parameter:: Coul=0.25d0
       data time / 0.0d0 /
