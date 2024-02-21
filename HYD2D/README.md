@@ -51,7 +51,7 @@ If you need 2D snapshots, use the following command. Using `output/twopro*.dat` 
     
     gnuplot Plot2D.plt
     ls figures/
-    display dentwo00050.png
+    display figures/dentwo00050.png
     
 All snapshots are made by the following command. 
     
