@@ -29,7 +29,7 @@ Keep the original program as it is.
 Start the simulation by copying the original file. You can name the directory as you like. `_model1` is an example.
     
     cp -r HYD1D_original HYD1D_model1
-    cd Blastwave/HYD1D_model1
+    cd HYD1D_model1
 
 ### compile 
 To run the code, you need to compile `Simulation.f90`.
