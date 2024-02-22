@@ -45,9 +45,11 @@ Let's run the code.
     qsub pbs_more.sh
     
 The simulation data is saved in `bindata/`.
-
+    
+    ls bindata/
+    
 ### analysis
-Open another terminal and go to analysis server. Here ?? below is 09-14. To analyze the data, let us make `Analysis.x`.
+Open another terminal and go to analysis server, `an??.cfca.nao.ac.jp`. Here ?? is 09-14. To analyze the data, let us make `Analysis.x`.
     
     ssh <your account>@an??.cfca.nao.ac.jp
 
@@ -66,17 +68,24 @@ Then preparation is done. Run the analyis.
     ./Analysis.x
     
 The output is saved in `output/`.
+    
+    ls output/
+    
 ### 1D plots and animation.
 If you need 1D snapshots, use the following command. Using `output/onepro*.dat` (1DProfile), image files are made and save as `figures/*.png` (e.g., `denone00050.png`).
     
     gnuplot Plot1D.plt
     ls figures/
     display figures/denone00050.png
+    display figures/preone00050.png
+    display figures/velone00050.png
 
 Compare the figure with the following one.
 
     gnuplot
-    gnuplot> plot "output/onepro00050.dat" u 1:2 w l
+    gnuplot> plot "output/onepro00050.dat" u 1:2 w l title "density"
+    gnuplot> plot "output/onepro00050.dat" u 1:3 w l title "pressure"
+    gnuplot> plot "output/onepro00050.dat" u 1:4 w l title "velocity"
     
     
 All snapshots are made by the following command. 
@@ -106,6 +115,7 @@ Compare the figure with the following one.
 
     gnuplot
     gnuplot> set view map
+    gnuplot> set title "density"
     gnuplot> splot "t-r-pro.dat" u 1:2:3 w pm3d
     
 ### Do all of them
@@ -113,6 +123,7 @@ To do all in one command, you just type `make` or `make all`.
    
       make all
       
+If you want th delete all the analysis, type `make allclean`
 # How to change the parameters
 Let us try to change the parameters. Before change it. Confirm you are logining in `more.cfca.nao.ac.jp`.
 If you are still in the directory where `Simulation.x` exists, change the directory.
@@ -168,3 +179,4 @@ You can change the paramters as you like.
       write(6,*) "vel= ",vel1   ,"[cm/s]"
       write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
 </pre>
+After editing `Simulation.f90`, compile the code.
