@@ -7,16 +7,16 @@
 This is the instruction for spring school of division of science.
 
 ### login and go to work directory 
-First login the server, more.
+First login the server, `more.cfca.nao.ac.jp`.
 
     ssh <your account>@more.cfca.nao.ac.jp
     
-Then, go to work directory.
+Then, go to work directory. Make it if that does not exist.
 
     mkdir /cfca-work/<your account>
     cd /cfca-work/<your account>
 
-Copy the programs.
+Copy the programs. 
     
     cp -r /cfca-work/dos04/Blastwave .
 
@@ -26,7 +26,7 @@ Keep the original program as it is.
     mv HYD1D HYD1D_original
    
 ### Making your model 
-First, let us copy the original file to start "your model". You can name the directory as you like. `_model1` is just a example.
+Start the simulation by copying the original file. You can name the directory as you like. `_model1` is an example.
     
     cp -r HYD1D_original HYD1D_model1
     cd Blastwave/HYD1D_model1
@@ -118,6 +118,9 @@ Let us try to change the parameters. Before change it. Change the name of the pr
 If you are still in `analysis`, change directory.
 
     cd ../..
+
+As you did it, you start the simulation by copying the original program. Here `_model2` is an example.
+    
     cp -r HYD1D_original HYD1D_model2
     cd HYD1D_model2
 
