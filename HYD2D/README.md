@@ -16,7 +16,7 @@ Then, go to work directory. Make it if that does not exist.
     mkdir /cfca-work/<your account>
     cd /cfca-work/<your account>
 
-Copy the programs.　If you do not did it before. 
+Copy the programs.　If you did not do it before. 
     
     cp -r /cfca-work/dos04/Blastwave .
 
