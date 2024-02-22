@@ -11,7 +11,7 @@ First login the server, more.
 
     ssh <your account>@more.cfca.nao.ac.jp
     
-Then go to work directory.
+Then, go to work directory.
 
     mkdir /cfca-work/<your account>
     cd /cfca-work/<your account>
@@ -19,11 +19,21 @@ Then go to work directory.
 Copy the programs.
     
     cp -r /cfca-work/dos04/Blastwave .
+
+Keep the original program as it is.
+    
+    cd Blastwave/
+    mv HYD1D HYD1D_original
    
+### Making your model 
+First, let us copy the original file to start "your model". You can name the directory as you like. `_model1` is just a example.
+    
+    cp -r HYD1D_original HYD1D_model1
+    cd Blastwave/HYD1D_model1
+
 ### compile 
 To run the code, you need to compile `Simulation.f90`.
     
-    cd Blastwave/HYD1D
     module load intel/2022
     make Simulation.x
     
@@ -37,13 +47,13 @@ Let's run the code.
 The simulation data is saved in `bindata/`.
 
 ### analysis
-Go to analysis server. Here ?? below is 09-14. To analyze the data, let us make `Analysis.x`.
+Open another terminal and go to analysis server. Here ?? below is 09-14. To analyze the data, let us make `Analysis.x`.
     
     ssh <your account>@an??.cfca.nao.ac.jp
 
-Then go to work directory.
+Then go to the work directory. Change `_model1` to the name you used.
     
-    cd /cfca-work/<your account>/Blastwave/HYD1D/analysis
+    cd /cfca-work/<your account>/Blastwave/HYD1D_model1/analysis
     make Analysis.x
     
 Now you have many time-snapshots of data. To count it, use a script.
@@ -108,11 +118,10 @@ Let us try to change the parameters. Before change it. Change the name of the pr
 If you are still in `analysis`, change directory.
 
     cd ../..
-    mv HYD1D HYD1D-model1
-    cp -r /cfca-work/dos04/Blastwave/HYD1D .
-    cd HYD1D
+    cp -r HYD1D_original HYD1D_model2
+    cd HYD1D_model2
 
-Now you are in `HYD1D`. You can change the number of numerical grid in `module commons` in `Simulation.f90`.
+Now you are in `HYD1D_model2`. You can change the number of numerical grid in `module commons` in `Simulation.f90`.
 <pre>
       integer,parameter::izones=200
 </pre>
