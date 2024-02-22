@@ -113,7 +113,7 @@ To do all in one command, you just type `make` or `make all`.
    
       make all
       
-# How to change parameter
+# How to change the parameters
 Let us try to change the parameters. Before change it. Confirm you are logining in `more.cfca.nao.ac.jp`.
 If you are still in the directory where `Simulation.x` exists, change the directory.
 
@@ -124,7 +124,7 @@ You may find the following directries.
 
     HYD1D_original HYD1D_model1
     
-As you did it, you start the simulation by copying the original program. Here `_model2` is an example.
+As you did it, you start the simulation by copying the original program. Here `_model2` is an example. If that already exists, change the name, e.g., `_model3`, `_model4`.  
     
     cp -r HYD1D_original HYD1D_model2
     cd HYD1D_model2
