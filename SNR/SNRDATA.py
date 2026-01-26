@@ -47,12 +47,12 @@ cmapudc =  cycler(color=["#ff2800","#0041ff" ,"#35a16B","#faf500","#66ccff", "#f
 plt.rcParams['axes.prop_cycle'] = cmapudc
 cmap = ["#ff2800","#0041ff" ,"#35a16B","#faf500","#66ccff", "#ff99a0","#ff9900" ,"#9a0079", "#663300"]
 
-def PlotAgeRadius(df):
+def PlotAgeRadius(dfobs):
     from adjustText import adjust_text
     otputfile = "Age-Radius.png"
-    x = df['age [kyr]']*1000
-    y = df["radius [pc]"]
-    text=df["Name"]
+    x = dfobs['age [kyr]']*1000
+    y = dfobs["radius [pc]"]
+    text=dfobs["Name"]
 
     fig=plt.figure(figsize=(6.4, 5.2),layout="tight")
     ax = fig.add_subplot(1,1,1)
@@ -62,5 +62,6 @@ def PlotAgeRadius(df):
     ax.grid(color='lightgray')
     ax.set_xlabel(r'Age [year]', fontsize=fsizeforlabel)
     ax.set_ylabel(r'Radius [pc]' ,fontsize=fsizeforlabel)
+    
     fig.savefig(otputfile)
 Main()

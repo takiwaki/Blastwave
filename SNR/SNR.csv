@@ -1,4 +1,4 @@
-"Name","age[kyr]","size x[arcmin]","size y[arcmin]","Distance [kpc]","Velocity [km/s]","Temperture [keV]"
+"Name","age [kyr]","size x[arcmin]","size y[arcmin]","Distance [kpc]","Velocity [km/s]","Temperture [keV]"
 "Cas A", 0.340, 5.9, 5.5, 3.4,332.0,4.3
 "Kepler", 0.416,4.5,3.7, 5.0,,4.5
 "Tycho", 0.448, 8.7,8.6,2.4,,1.7
