@@ -11,7 +11,7 @@ exe=Simulation.x
 ######################	
 # complile options
 ######################
-fc=ifort
+fc=ifort -diag-disable=10448
 fopt=-g -traceback -O2
 #fopt=-g -traceback -check all -fpe0
 
