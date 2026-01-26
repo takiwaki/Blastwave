@@ -120,11 +120,10 @@ end module eosmod
       call ConsvVariable
       write(6,*) "entering main loop"
 ! main loop
-      write(6,*)"step","time [yr]","dt [yr]"
       mloop: do nhy=1,nhymax
          call TimestepControl
 !         if(mod(nhy,nhyspan) .eq. 0 ) write(6,*)nhy,time/year,dt/year
-         write(6,*)nhy,time/year,dt/year
+         print *,"step=",nhy," time [yr]=",time/year," dt [yr]=",dt/year
          call BoundaryCondition
          call StateVector
          call NumericalFlux1
