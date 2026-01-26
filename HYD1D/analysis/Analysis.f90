@@ -22,6 +22,8 @@ module fieldmod
     real(8):: dx
     real(8):: gam,rho0,Eexp
 
+    real(8):: rshock,Msw
+
 end module fieldmod
 
 program data_analysis
@@ -42,6 +44,7 @@ program data_analysis
   FILENUMBER: do incr  = fbeg,fend
      write(6,*) "file index",incr
      call ReadData
+     call FindShockRadius
      call Visualize1D
      call Integration
   enddo FILENUMBER
@@ -111,6 +114,27 @@ subroutine ReadData
   return
 end subroutine ReadData
 
+subroutine FindShockRadius
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+  real(8):: pmax
+  
+  rshock = 0.0d0
+  pmax = 0.0d0
+  k = ks
+  j = js 
+  do i=is,ie
+     if(pmax < p(i,j,k)) then
+        pmax = p(i,j,k)
+        rshock = x1b(i)
+     endif
+  enddo
+  print *, "rshock=",rshock/pc,"[pc]"
+  
+end subroutine FindShockRadius
+  
 subroutine Visualize1D
   use unitsmod
   use fieldmod
@@ -154,7 +178,7 @@ subroutine Integration
 
   character(20),parameter::dirname="output/"
   character(40)::filename
-  integer,parameter::unittot=1234
+  integer::unittpr
   real(8)::Etot,pi
 
   logical,save:: is_inited
@@ -166,24 +190,25 @@ subroutine Integration
   endif
 
   pi = acos(-1.0d0)
-
+  Msw = 0.0d0
   Etot=0.0d0
   k=ks
   j=js
   do i=is,ie
+     if(x1b(i) <= rshock ) Msw  = Msw  + d(i,j,k)*dvl1a(i)*4.0d0*pi
      Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*4.0d0*pi
   enddo
-
-  write(filename,'(a3,i5.5,a4)')"tot",incr,".dat"
+  #print *, "Msw=",Msw/Msolar,"[M_s]"
+  write(filename,'(a3,i5.5,a4)')"tpr",incr,".dat"
   filename = trim(dirname)//filename
-  open(unittot,file=filename,status='replace',form='formatted')
+  open(newunit=unittpr,file=filename,status='replace',form='formatted')
 
 !  write(unittot,'(1a,4(1x,E12.3))') "#",time/year
 !                                    12345678   1234567890123     1234567890123   123456789012
 !  write(unittot,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
 
-  write(unittot,'(1x,4(1x,E13.3))') time,Etot
-  close(unittot)
+  write(unittpr,'(1x,4(1x,E13.3))') time,rshock,Msw,Etot
+  close(unittpr)
 
   return
 end subroutine  Integration
