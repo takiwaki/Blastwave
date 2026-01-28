@@ -82,6 +82,7 @@ end module eosmod
       use commons
       implicit none
       integer,parameter:: nhyspan=10
+      call print_omp_threads
       write(6,*) "setup grids and fields"
       call GenerateGrid
       call GenerateProblem
@@ -106,6 +107,24 @@ end module eosmod
 
       write(6,*) "program has been finished"
       end program main
+
+      subroutine print_omp_threads()
+        use omp_lib
+        implicit none
+        
+        integer :: tid, nthreads
+        
+        !$omp parallel private(tid)
+        tid = omp_get_thread_num()
+        nthreads = omp_get_num_threads()
+        
+        !$omp critical
+        write(*,'(A,I4,A,I4)') 'I use thread ', tid, &
+             ' / total threads = ', nthreads
+        !$omp end critical
+        !$omp end parallel
+     
+      end subroutine print_omp_threads
 
       subroutine GenerateGrid
       use commons
@@ -545,6 +564,7 @@ end module eosmod
       is_inited = .true.
      endif
      k=ks
+!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nflux)
       do j=js,je
       do i=is,ie+1
          Pleftc1(:) = svc(:,i-2,j,k)
@@ -643,7 +663,7 @@ end module eosmod
 
       enddo
       enddo
-      
+!$end omp parallel
       return
       end subroutine Numericalflux1
 
@@ -713,6 +733,7 @@ end module eosmod
      endif
   
      k=ks
+!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nflux)
      do i=is,ie
      do j=js,je+1
          Pleftc1(:) = svc(:,i,j-2,k)
@@ -802,8 +823,9 @@ end module eosmod
          nflux2(mrv3,i,j,k)=nflux(mrvv)
          nflux2(meto,i,j,k)=nflux(meto)
       enddo
-      enddo
-   
+      enddo   
+!$end omp parallel
+      
       return
       end subroutine Numericalflux2
 

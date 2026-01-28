@@ -13,6 +13,7 @@ exe=Simulation.x
 ######################
 fc=ifort -diag-disable=10448 -extend-source
 fopt=-g -traceback -O2
+foptomp=-qopenmp
 #fopt=-g -traceback -check all -fpe0
 
 ##########################################
@@ -30,7 +31,7 @@ dird := bindata
 #################
 
 ${exe}: Simulation.f90
-	${fc} ${fopt} $< -o ${exe}
+	${fc} ${fopt} ${foptomp} $< -o ${exe}
 
 #################
 # clean up
