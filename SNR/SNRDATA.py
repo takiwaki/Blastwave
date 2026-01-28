@@ -35,6 +35,10 @@ cmap = ["#ff2800", "#0041ff", "#35a16B", "#faf500", "#66ccff",
 class SimCurve:
     t_year: np.ndarray
     r_pc: np.ndarray
+    Msw: np.ndarray
+    kTshock: np.ndarray
+    Vshock: np.ndarray
+    Lbol: np.ndarray
     label: str
 
 
@@ -128,10 +132,14 @@ def read_one_sim_file(path: str, modelname: str) -> SimCurve:
             raise RuntimeError(f"Expected >=2 columns but got {data.shape[1]} columns")
         t = data[:, 0]
         r = data[:, 1]
+        M = data[:, 2]
+        T = data[:, 3]
+        V = data[:, 4]
+        L = data[:, 5]
     except Exception as e:
         raise RuntimeError(f"Failed to read simulation file: {path}\n{e}")
 
-    return SimCurve(t_year=t, r_pc=r, label=modelname)
+    return SimCurve(t_year=t, r_pc=r, Msw=M, kTshock=T, Vshock=V,Lbol=L,label=modelname)
 
 
 def read_simulation_curves(name_file_list: List[List[str]]) -> List[SimCurve]:
