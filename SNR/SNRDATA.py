@@ -1,7 +1,11 @@
 import os
 import glob
 import sys
-import pandas as pd
+import csv
+from dataclasses import dataclass
+from typing import List, Dict, Any, Tuple
+
+import numpy as np
 import matplotlib.pyplot as plt
 from cycler import cycler
 
@@ -27,78 +31,133 @@ cmap = ["#ff2800", "#0041ff", "#35a16B", "#faf500", "#66ccff",
         "#ff99a0", "#ff9900", "#9a0079", "#663300"]
 
 
+@dataclass
+class SimCurve:
+    t_year: np.ndarray
+    r_pc: np.ndarray
+    label: str
+
+
 def main():
     # --- observation points ---
-    dfobs = read_obs_data("SNR.csv")
-    dfobs = calculate_radius_pc(dfobs)
+    obs = read_obs_data("SNR.csv")
+    obs = calculate_radius_pc(obs)
 
-    sim_name_files = [ [r"$M_{ejecta}=10\,M_\odot, E_{exp}=10^{51}\,erg$","../HYD1D/analysis/t-prof.dat"]]
-    
-    dfsim_list = read_simulation_curves(sim_name_files)
+    sim_name_files = [
+        [r"$M_{ejecta}=10\,M_\odot, E_{exp}=10^{51}\,erg$", "../HYD1D/analysis/t-prof.dat"]
+    ]
 
-    plot_age_radius(dfobs, dfsim_list, outputfile="Age-Radius.png")
+    sim_list = read_simulation_curves(sim_name_files)
+
+    plot_age_radius(obs, sim_list, outputfile="Age-Radius.png")
 
 
 # -----------------------------
-# Observation
+# Observation (NO pandas)
 # -----------------------------
-def read_obs_data(path: str) -> pd.DataFrame:
+def _to_float(s: str) -> float:
     try:
-        return pd.read_csv(path, sep=",", skiprows=0, header=0)
-    except IOError:
+        return float(s)
+    except Exception:
+        return float("nan")
+
+
+def read_obs_data(path: str) -> Dict[str, Any]:
+    """
+    Read SNR.csv without pandas.
+
+    Returns a dict of numpy arrays:
+      - "Name" (list[str])
+      - "age [kyr]" (np.ndarray)
+      - "size x[arcmin]" (np.ndarray)
+      - "size y[arcmin]" (np.ndarray)
+      - "Distance [kpc]" (np.ndarray)
+      - plus computed "radius [pc]" after calculate_radius_pc()
+    """
+    try:
+        with open(path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            if reader.fieldnames is None:
+                raise RuntimeError("CSV header not found")
+
+            names: List[str] = []
+            age_kyr: List[float] = []
+            size_x: List[float] = []
+            size_y: List[float] = []
+            dist_kpc: List[float] = []
+
+            for row in reader:
+                names.append((row.get("Name") or "").strip())
+                age_kyr.append(_to_float(row.get("age [kyr]", "")))
+                size_x.append(_to_float(row.get("size x[arcmin]", "")))
+                size_y.append(_to_float(row.get("size y[arcmin]", "")))
+                dist_kpc.append(_to_float(row.get("Distance [kpc]", "")))
+
+    except OSError:
         print("cannot open " + path)
         sys.exit(1)
 
+    return {
+        "Name": names,
+        "age [kyr]": np.asarray(age_kyr, dtype=float),
+        "size x[arcmin]": np.asarray(size_x, dtype=float),
+        "size y[arcmin]": np.asarray(size_y, dtype=float),
+        "Distance [kpc]": np.asarray(dist_kpc, dtype=float),
+    }
 
-def calculate_radius_pc(df: pd.DataFrame) -> pd.DataFrame:
+
+def calculate_radius_pc(obs: Dict[str, Any]) -> Dict[str, Any]:
     # arcmin -> rad
     arcmin = 0.000290888
-    dtheta = (df["size x[arcmin]"] + df["size y[arcmin]"]) / 4.0 * arcmin
-    df["radius [pc]"] = dtheta * df["Distance [kpc]"] * 1000.0
-    return df
+    dtheta = (obs["size x[arcmin]"] + obs["size y[arcmin]"]) / 4.0 * arcmin
+    obs["radius [pc]"] = dtheta * obs["Distance [kpc]"] * 1000.0
+    return obs
 
 
 # -----------------------------
-# Simulation curves
+# Simulation curves (NO pandas)
 # -----------------------------
-def read_one_sim_file(path: str, modelname) -> pd.DataFrame:
+def read_one_sim_file(path: str, modelname: str) -> SimCurve:
     try:
-        df = pd.read_csv(path, delim_whitespace=True, comment="#", header=None)
-        t = df.iloc[:, 0].to_numpy()
-        r = df.iloc[:, 1].to_numpy()
-
+        # Expect 2 columns: t_year, r_pc
+        data = np.loadtxt(path, comments="#", dtype=float)
+        if data.ndim == 1:
+            # single row -> shape (2,) -> (1,2)
+            data = data.reshape(1, -1)
+        if data.shape[1] < 2:
+            raise RuntimeError(f"Expected >=2 columns but got {data.shape[1]} columns")
+        t = data[:, 0]
+        r = data[:, 1]
     except Exception as e:
         raise RuntimeError(f"Failed to read simulation file: {path}\n{e}")
 
-    out = pd.DataFrame({"t_year": t, "r_pc": r})
-    out["label"] = modelname
-    return out
+    return SimCurve(t_year=t, r_pc=r, label=modelname)
 
 
-def read_simulation_curves(name_file_list):
+def read_simulation_curves(name_file_list: List[List[str]]) -> List[SimCurve]:
     """
-    Read many simulation files. Returns list[DataFrame].
-    Each DF has: t_year, r_pc, label
+    Read many simulation files. Returns list[SimCurve].
+    Each curve has: t_year, r_pc, label
     """
-    dfs = []
-    for name,f in name_file_list:
+    curves: List[SimCurve] = []
+    for name, f in name_file_list:
         try:
-            dfs.append(read_one_sim_file(f,name))
+            curves.append(read_one_sim_file(f, name))
         except RuntimeError as e:
             print(e)
-    return dfs
+    return curves
 
 
 # -----------------------------
 # Plot
 # -----------------------------
-def plot_age_radius(dfobs: pd.DataFrame, dfsim_list, outputfile="Age-Radius.png"):
+def plot_age_radius(obs: Dict[str, Any], sim_list: List[SimCurve], outputfile: str = "Age-Radius.png"):
     # Observation
-    x_obs = dfobs["age [kyr]"] * 1000.0  # year
-    y_obs = dfobs["radius [pc]"]
-    text = dfobs["Name"]
+    x_obs = obs["age [kyr]"] * 1000.0  # year
+    y_obs = obs["radius [pc]"]
+    labels = obs["Name"]
 
-    fig = plt.figure(figsize=(6.4, 5.2), layout="tight")
+    fig = plt.figure(figsize=(6.4, 5.2))
     ax = fig.add_subplot(1, 1, 1)
 
     # Observed points
@@ -107,27 +166,26 @@ def plot_age_radius(dfobs: pd.DataFrame, dfsim_list, outputfile="Age-Radius.png"
     # Labels for observed points (optional)
     try:
         from adjustText import adjust_text
-        texts = [plt.text(x_obs.iloc[i], y_obs.iloc[i], text.iloc[i],
-                          ha="center", va="center") for i in range(len(x_obs))]
+        texts = [plt.text(float(x_obs[i]), float(y_obs[i]), labels[i],
+                          ha="center", va="center") for i in range(len(labels))]
         adjust_text(texts)
     except Exception:
         # adjustText not installed -> skip
         pass
 
     # Simulation curves
-    for i, df in enumerate(dfsim_list):
-        # sort by time in case the file is unsorted
-        df_sorted = df.sort_values("t_year")
-        ax.plot(df_sorted["t_year"], df_sorted["r_pc"],
-                lw=2, label=f"{df_sorted['label'].iloc[0]}")
+    for curve in sim_list:
+        order = np.argsort(curve.t_year)  # sort by time in case the file is unsorted
+        ax.plot(curve.t_year[order], curve.r_pc[order], lw=2, label=curve.label)
 
     ax.grid(color="lightgray")
     ax.set_xlabel(r"Age [year]", fontsize=fsizeforlabel)
     ax.set_ylabel(r"Radius [pc]", fontsize=fsizeforlabel)
     ax.legend(fontsize=10, frameon=False)
-
+    fig.tight_layout()
     fig.savefig(outputfile)
     print("saved:", outputfile)
+
 
 if __name__ == "__main__":
     main()
