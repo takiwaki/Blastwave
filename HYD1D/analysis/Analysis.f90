@@ -27,7 +27,7 @@ module fieldmod
     real(8):: dx
     real(8):: gam,rho0,Eexp
 
-    real(8):: rshock,Msw,kTshock,Lbol
+    real(8):: rshock,Msw,kTshock,Vshock,Lbol
 
 end module fieldmod
 
@@ -152,7 +152,8 @@ subroutine FindShockRadius
      ! find pressure max and set rshock, note x1b(i) is the radius
      rshock = 0.0d0
      ! use p = n T and set T_shock 
-     kTshock = 0.0d0! T [keV] 
+     kTshock = 0.0d0! T [keV]
+     Vshock = 0.0d0 ! v [km/s]
   enddo
   !print *, "rshock=",rshock/pc,"[pc]"
   
@@ -259,6 +260,7 @@ subroutine FindShockRadiusAnswer
   rshock = 0.0d0
   pmax = 0.0d0
   kTshock = 0.0d0
+  Vshock  = 0.0d0
   k = ks
   j = js 
   do i=is,ie
@@ -266,11 +268,13 @@ subroutine FindShockRadiusAnswer
         pmax = p(i,j,k)
         rshock = x1b(i)
         ! p = n T 
-        kTshock = (kbol*1.0d5)*Tem(i,j,k)*erg_to_keV ! T [keV] 
+        kTshock = (kbol*1.0d5)*Tem(i,j,k)*erg_to_keV ! T [keV]
+        Vshock = v1(i,j,k)/1.0e5 ! cm/s => km/s
      endif
   enddo
   !print *, "rshock=",rshock/pc,"[pc]"
-  print *, "kTshock=",kTshock,"[keV]"
+  !print *, "kTshock=",kTshock,"[keV]"
+  !print *, "Vshock=",Vshock,"[km/s]"
   
 end subroutine FindShockRadiusAnswer
 
@@ -308,8 +312,8 @@ subroutine TimeProfleAnswer
   filename = trim(dirname)//filename
   if(.not. is_inited) print *,"time evolution is written in", filename
   if(.not. is_inited) open(newunit=unittpr,file=filename,status='replace',form='formatted')
-  if(.not. is_inited) write(unittpr,'(1a,1x,A)') "#"," time[year] rshock[pc] Msw[Ms] Tshock[keV] Lbol[erg/s] Etot[erg]"
-  write(unittpr,'(1x,6(1x,E13.3))') time/year,rshock/pc,Msw/Msolar,kTshock,Lbol,Etot
+  if(.not. is_inited) write(unittpr,'(1a,1x,A)') "#"," time[year] rshock[pc] Msw[Ms] Tshock[keV] Vshock[km/s] Lbol[erg/s] Etot[erg]"
+  write(unittpr,'(1x,7(1x,E13.3))') time/year,rshock/pc,Msw/Msolar,kTshock,Vshock,Lbol,Etot
   
   !close(unittpr)
   
