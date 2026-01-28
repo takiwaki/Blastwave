@@ -719,7 +719,7 @@ end module eosmod
          Pleftc2(:) = svc(:,i,j-1,k)
          Prigtc1(:) = svc(:,i,j  ,k)
          Prigtc2(:) = svc(:,i,j+1,k)     
-! | Pleftc1   | Pleftc2 |<= Prigtc1   | Prigtc2   |        
+! | Pleftc1   | Pleftc2 =>| Prigtc1   | Prigtc2   |        
 !                     You are here   
 !====================
 ! Left
@@ -757,7 +757,7 @@ end module eosmod
          leftco(mpre)= Plefte(npre)
 
      
-! | Pleftc1   | Pleftc2 =>| Prigtc1   | Prigtc2   |        
+! | Pleftc1   | Pleftc2 |<= Prigtc1   | Prigtc2   |        
 !                     You are here  
 !====================
 ! Right
