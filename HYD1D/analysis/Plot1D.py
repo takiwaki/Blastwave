@@ -93,7 +93,8 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   fig1.tight_layout()
   print("output"+outputfile)
   fig1.savefig(outputfile)
-
+  plt.close()
+  
   outputfile=outputdatapath+ "preone"+ num +".png"
   fig1 = plt.figure(figsize=(6,4.5))
   ax1 = fig1.add_subplot(1,1,1)
@@ -104,7 +105,8 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   fig1.tight_layout()
   print("output"+outputfile)
   fig1.savefig(outputfile)
-
+  plt.close()
+  
   outputfile=outputdatapath+ "velone"+ num +".png"
   fig1 = plt.figure(figsize=(6,4.5))
   ax1 = fig1.add_subplot(1,1,1)
@@ -115,6 +117,7 @@ def PlotRadData(num,time,rad,rho,pre,vel):
   fig1.tight_layout()
   print("output"+outputfile)
   fig1.savefig(outputfile)
-
+  plt.close()
+  
 if __name__ == "__main__":
     Main()

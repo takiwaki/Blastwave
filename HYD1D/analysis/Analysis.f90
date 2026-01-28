@@ -5,6 +5,10 @@ module unitsmod
   real(8),parameter:: Msolar = 1.989e33         ! g
   real(8),parameter::   kbol = 1.380649d-23     ! J/K
   real(8),parameter::   year = 365.0d0*24*60*60 ! sec  
+
+  real(8),parameter:: mp=1.67262192369d-24  !! proton mass [g]
+  real(8),parameter:: kB=1.380649d-16  !! Boltzmann constant [erg/K]
+  real(8),parameter:: erg_to_keV= 6.242d8  !! erg => keV
 end module unitsmod
       
 
@@ -19,10 +23,11 @@ module fieldmod
     real(8),dimension(:),allocatable:: x1b,x2b,dvl1a
     real(8),dimension(:),allocatable:: x1a,x2a
     real(8),dimension(:,:,:),allocatable:: d,v1,v2,v3,p,ei,gp
+    real(8),dimension(:,:,:),allocatable:: Tem,edot
     real(8):: dx
     real(8):: gam,rho0,Eexp
 
-    real(8):: rshock,Msw
+    real(8):: rshock,Msw,kTshock,Lbol
 
 end module fieldmod
 
@@ -44,9 +49,10 @@ program data_analysis
   FILENUMBER: do incr  = fbeg,fend
      write(6,*) "file index",incr
      call ReadData
-     call FindShockRadius
+     call EstimateEmissivity
+     call FindShockRadiusAnswer
      call Visualize1D
-     call Integration
+     call TimeProfleAnswer
   enddo FILENUMBER
 
   stop
@@ -113,28 +119,46 @@ subroutine ReadData
   
   return
 end subroutine ReadData
-
+subroutine EstimateEmissivity
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+  logical:: is_inited
+  data is_inited / .false. /
+  if(.not. is_inited) then
+     allocate(Tem(in,jn,kn))
+     allocate(edot(in,jn,kn))
+     is_inited = .true.
+  endif
+  k=ks
+  j=js
+  do i =is,ie
+     ! p = n k T => T = p/(n)/k since kbol[J/K] kbol*1.0d5 [erg/K] 
+     Tem(i,j,k) = p(i,j,k)/(d(i,j,k)/mp) / (kbol*1.0d5) ! [K]
+     edot(i,j,k) = 1.4d-27 * (d(i,j,k)/mp)**2 *sqrt(Tem(i,j,k)) ! erg/s/cm^3
+  enddo
+end subroutine EstimateEmissivity
+  
 subroutine FindShockRadius
   use unitsmod
   use fieldmod
   implicit none
   integer::i,j,k
-  real(8):: pmax
   
-  rshock = 0.0d0
-  pmax = 0.0d0
   k = ks
   j = js 
   do i=is,ie
-     if(pmax < p(i,j,k)) then
-        pmax = p(i,j,k)
-        rshock = x1b(i)
-     endif
+     ! find pressure max and set rshock, note x1b(i) is the radius
+     rshock = 0.0d0
+     ! use p = n T and set T_shock 
+     kTshock = 0.0d0! T [keV] 
   enddo
-  print *, "rshock=",rshock/pc,"[pc]"
+  !print *, "rshock=",rshock/pc,"[pc]"
   
 end subroutine FindShockRadius
-  
+
+
 subroutine Visualize1D
   use unitsmod
   use fieldmod
@@ -170,7 +194,7 @@ subroutine Visualize1D
   return
 end subroutine Visualize1D
 
-subroutine Integration
+subroutine TimeProfle
   use unitsmod
   use fieldmod
   implicit none
@@ -186,7 +210,6 @@ subroutine Integration
 
   if(.not. is_inited)then
      call makedirs(dirname)
-     is_inited = .true.
   endif
 
   pi = acos(-1.0d0)
@@ -195,23 +218,22 @@ subroutine Integration
   k=ks
   j=js
   do i=is,ie
-     if(x1b(i) <= rshock ) Msw  = Msw  + d(i,j,k)*dvl1a(i)*4.0d0*pi
+     ! add Msw if possible
      Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*4.0d0*pi
   enddo
-  #print *, "Msw=",Msw/Msolar,"[M_s]"
+  !print *, "Msw=",Msw/Msolar,"[M_s]"
   write(filename,'(a3,i5.5,a4)')"tpr",incr,".dat"
   filename = trim(dirname)//filename
   open(newunit=unittpr,file=filename,status='replace',form='formatted')
+  if(.not. is_inited) write(unittpr,'(1a,1x,A)') "#"," time[year] rshock[pc] Msw[Ms] kTshock[keV] Etot[erg]"
 
-!  write(unittot,'(1a,4(1x,E12.3))') "#",time/year
-!                                    12345678   1234567890123     1234567890123   123456789012
-!  write(unittot,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
-
-  write(unittpr,'(1x,4(1x,E13.3))') time,rshock,Msw,Etot
+  write(unittpr,'(1x,5(1x,E13.3))') time/year,rshock/pc,Msw/Msolar,kTshock,Etot
   close(unittpr)
+  
+  is_inited = .true.
 
   return
-end subroutine  Integration
+end subroutine  TimeProfle
 
 subroutine makedirs(outdir)
   implicit none
@@ -222,4 +244,76 @@ subroutine makedirs(outdir)
   call system(command)
 end subroutine makedirs
 
+!---------------------------
+! in the following
+!---------------------------
 
+
+subroutine FindShockRadiusAnswer
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+  real(8):: pmax
+  
+  rshock = 0.0d0
+  pmax = 0.0d0
+  kTshock = 0.0d0
+  k = ks
+  j = js 
+  do i=is,ie
+     if(pmax < p(i,j,k)) then
+        pmax = p(i,j,k)
+        rshock = x1b(i)
+        ! p = n T 
+        kTshock = (kbol*1.0d5)*Tem(i,j,k)*erg_to_keV ! T [keV] 
+     endif
+  enddo
+  !print *, "rshock=",rshock/pc,"[pc]"
+  print *, "kTshock=",kTshock,"[keV]"
+  
+end subroutine FindShockRadiusAnswer
+
+subroutine TimeProfleAnswer
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+
+  character(20),parameter::dirname="./"
+  character(40)::filename
+  integer,save::unittpr
+  real(8)::Etot,pi
+
+  logical,save:: is_inited
+  data is_inited / .false. /
+
+  if(.not. is_inited)then
+     call makedirs(dirname)
+  endif
+
+  pi = acos(-1.0d0)
+  Msw  = 0.0d0
+  Etot = 0.0d0
+  Lbol = 0.0d0
+  k=ks
+  j=js
+  do i=is,ie
+     if(x1b(i) <= rshock ) Msw  = Msw  + d(i,j,k)*dvl1a(i)*4.0d0*pi
+     Lbol = Lbol + edot(i,j,k) * dvl1a(i)*4.0d0*pi
+     Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*4.0d0*pi
+  enddo
+  !print *, "Msw=",Msw/Msolar,"[M_s]"
+  write(filename,'(A)')"t-prof.dat"
+  filename = trim(dirname)//filename
+  if(.not. is_inited) print *,"time evolution is written in", filename
+  if(.not. is_inited) open(newunit=unittpr,file=filename,status='replace',form='formatted')
+  if(.not. is_inited) write(unittpr,'(1a,1x,A)') "#"," time[year] rshock[pc] Msw[Ms] Tshock[keV] Lbol[erg/s] Etot[erg]"
+  write(unittpr,'(1x,6(1x,E13.3))') time/year,rshock/pc,Msw/Msolar,kTshock,Lbol,Etot
+  
+  !close(unittpr)
+  
+  is_inited = .true.
+
+  return
+end subroutine  TimeProfleAnswer

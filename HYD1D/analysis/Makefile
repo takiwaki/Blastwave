@@ -50,7 +50,7 @@ PREONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/preone%.png,$(ONEPRO))
 XCMONEPNG = $(patsubst ${dira}/onepro%.dat,${dirf}/xcmone%.png,$(ONEPRO))
 
 # intgrated values 
-TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
+TPR   = $(patsubst ${dird}/unf%.dat,${dira}/tpr%.dat,$(BIN))
 
 ##########################################
 # Movies
@@ -85,9 +85,6 @@ timeevolution: ${timefile} ## time evolution
 
 ${timeevo}: PlotTime.plt t-prof.dat
 	gnuplot PlotTime.plt
-
-t-prof.dat: MakeTimeseq.sh ${TOT}
-	./MakeTimeseq.sh
 
 ##########################################
 # Space time diagram
@@ -141,7 +138,7 @@ ${countfile}: CountBindata.sh
 ${ONEPRO}: ${ana} ${BIN} ${countfile}
 	./${ana}
 
-${TOT}: ${ana} ${BIN} ${countfile}
+t-prof.dat: ${ana} ${BIN} ${countfile}
 	./${ana}
 
 #################

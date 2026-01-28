@@ -14,18 +14,26 @@ def Main():
 
 
     time = np.empty(0,dtype=float)
+    R    = np.empty(0,dtype=float)
+    M    = np.empty(0,dtype=float)
+    T    = np.empty(0,dtype=float)
+    L    = np.empty(0,dtype=float)
     Eexp = np.empty(0,dtype=float)
     for file in files:
         print(file)
-        timeloc,Eexploc = ReadData(file)
+        timeloc,Rloc,Mloc,Tloc,Lloc,Eexploc = ReadData(file)
 #        print(str(timeloc)+str(Eexploc))
         time = np.append(time, timeloc)
+        R    = np.append(   R,    Rloc)
+        M    = np.append(   M,    Mloc)
+        T    = np.append(   T,    Tloc)
+        L    = np.append(   L,    Lloc)
         Eexp = np.append(Eexp, Eexploc)
     PlotTimeEexp(time,Eexp)
 
 def GetFileList():
     global dir_path
-    filenames= dir_path+"tot*.dat"
+    filenames= dir_path+"tpr*.dat"
     files = glob.glob(filenames)
     files = sorted(files)
     return files
@@ -37,7 +45,11 @@ def ReadData(file):
         header= inputf.readline() # Read the fisrt line
         item= header.split()
         t = float(item[0])
-        Eexp =float(item[1])
+        R = float(item[1])
+        M = float(item[2])
+        T = float(item[3])
+        L = float(item[4])
+        Eexp =float(item[5])
         print(t)
         inputf.close()
 
@@ -45,7 +57,7 @@ def ReadData(file):
         print(" cannot open " + input )
         sys.exit()
     
-    return t, Eexp
+    return t, R,M,T,L,Eexp
 
 def PlotTimeEexp(time,Eexp):
   from matplotlib import ticker, cm, colors
