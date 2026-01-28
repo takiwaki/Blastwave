@@ -403,7 +403,7 @@ end module eosmod
 
 !$omp parallel do collapse(3)
       do k=ks,ke
-      do j=js,je
+      do j=1,jn-1
       do i=1,in-1
          svc(nden,i,j,k) =  d(i,j,k)
          svc(nve1,i,j,k) = v1(i,j,k)
@@ -504,7 +504,7 @@ end module eosmod
 
       return
       end subroutine MClimiter
-
+ 
       subroutine NumericalFlux1
       use commons, only: is,ie,in,js,je,jn,ks,ke,kn,mgn,x1a,x1b
       use fluxmod
@@ -643,7 +643,7 @@ end module eosmod
 
       enddo
       enddo
-
+      
       return
       end subroutine Numericalflux1
 
@@ -753,7 +753,7 @@ end module eosmod
      &                     +Plefte(nve3)**2) &
      &                     +Plefte(npre) )*Plefte(nve2)
          leftco(mcsp)= Plefte(ncsp)
-         leftco(mvel)= Plefte(nve1)
+         leftco(mvel)= Plefte(nve2)
          leftco(mpre)= Plefte(npre)
 
      
@@ -790,7 +790,7 @@ end module eosmod
      &                     +Prigte(nve3)**2) &
      &                     +Prigte(npre) )*Prigte(nve2)
          rigtco(mcsp)= Prigte(ncsp)
-         rigtco(mvel)= Prigte(nve1)
+         rigtco(mvel)= Prigte(nve2)
          rigtco(mpre)= Prigte(npre)
          
          !call HLLC(leftco,rigtco,nflux)
