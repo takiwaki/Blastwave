@@ -2,7 +2,7 @@
 #PBS -N Blastwave2D
 #PBS -q openmp
 #PBS -m n
-#PBS -l ncpu=4
+#PBS -l ncpus=4
 #PBS -l walltime=00:30:00
 #PBS -j oe
 #PBS -o ${PBS_JOBNAME}.o${PBS_JOBID}
