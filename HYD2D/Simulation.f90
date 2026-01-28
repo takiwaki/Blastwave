@@ -92,7 +92,10 @@ end module eosmod
                                   write(6,*)"step","time [yr]","dt [yr]"
       mloop: do nhy=1,nhymax
          call TimestepControl
-         if(mod(nhy,nhyspan) .eq. 0 ) write(6,*)nhy,time/year,dt/year
+         if(mod(nhy,nhyspan) .eq. 0 )then
+            write(6,*)nhy,time/year,dt/year
+            call flush(6)
+         endif
 !         write(6,*)nhy,time/year,dt/year
          call BoundaryCondition
          call StateVector
@@ -178,7 +181,9 @@ end module eosmod
 
       integer,dimension(2) :: seed
       real(8),dimension(1) :: rnum
-      real(8),parameter :: rrv =1.0d-2
+      real(8),parameter :: rrv =5.0d-2
+      
+      real(8):: x,z
       
       pi =acos(-1.0d0)
       dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
@@ -191,7 +196,7 @@ end module eosmod
 
 ! blast wave
       frac = 0.8d0
-      rho1 = (10.0d0*Msolar)/(4.0*pi/3.0d0*dr**3)
+      rho1 = (1.0d0*Msolar)/(4.0*pi/3.0d0*dr**3)
       eexp = frac*(1.0d51)
       pre1 = eexp/(4.0*pi/3.0d0*dr**3)*(gam-1.0d0)  
       vel1 = sqrt((1.0d0-frac)*eexp/(4.0*pi/3.0d0*dr**3)/rho1)
@@ -227,17 +232,12 @@ end module eosmod
       enddo
       enddo
 
-      write(6,*) rrv*100.0d0 &
-     & , "% of Randam Perturbation imposed on density"
-      seed(1) = 1
-      seed(2) = 1
-      call random_seed(PUT=seed(1:2))
-
       do k=ks,ke
       do j=js,je
       do i=is,ie
-         call random_number(rnum)
-            d(i,j,k) = d(i,j,k)*(1.0d0+rrv*2.0d0*(rnum(1)-0.5d0))
+         x = x1b(i)*sin(x2b(j))
+         z = x1b(i)*cos(x2b(j))
+         !if( (x-2.5*pc)**2 + (z-0.5*pc)**2 < (1.0*pc)**2 ) d(i,j,k) = d(i,j,k) + 100.0d0*rho2
       enddo
       enddo
       enddo
@@ -1257,7 +1257,7 @@ end module eosmod
       write(unitbin) hydout(:,:,:,:)
       close(unitbin)
 
-      write(6,*) "output:",nout,time,dt
+      write(6,*) "output:",nout,"time=",time,"dt=",dt
 
       nout=nout+1
       tout=time
