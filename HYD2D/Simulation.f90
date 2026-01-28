@@ -633,7 +633,8 @@ end module eosmod
          rigtco(mpre)= Prigte(npre)
          
 
-         call HLLC(leftco,rigtco,nflux)
+         call HLLE(leftco,rigtco,nflux)
+         !call HLLC(leftco,rigtco,nflux)
          nflux1(mden,i,j,k)=nflux(mden)
          nflux1(mrv1,i,j,k)=nflux(mrvu)
          nflux1(mrv2,i,j,k)=nflux(mrvv)
@@ -763,8 +764,8 @@ end module eosmod
 !====================
          dsvp(:) = (Prigtc2(:) - Prigtc1(:))*frd(j) 
          dsvm(:) = (Prigtc1(:) - Pleftc2(:))*bck(j)
-         cflo = cf(j-1)
-         cblo = cb(j-1)
+         cflo = cf(j)
+         cblo = cb(j)
          call vanLeer(dsvp,dsvm,cflo,cblo,dsv)
          Prigte(:) = Prigtc1(:) - 0.5d0*dsv(:)*ctl(j)
 
@@ -792,7 +793,8 @@ end module eosmod
          rigtco(mvel)= Prigte(nve1)
          rigtco(mpre)= Prigte(npre)
          
-         call HLLC(leftco,rigtco,nflux)
+         !call HLLC(leftco,rigtco,nflux)
+         call HLLE(leftco,rigtco,nflux)
 
          nflux2(mden,i,j,k)=nflux(mden)
          nflux2(mrv1,i,j,k)=nflux(mrvw)
