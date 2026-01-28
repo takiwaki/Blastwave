@@ -11,7 +11,7 @@ ana=Analysis.x
 ######################	
 # complile options
 ######################
-fc=ifort
+fc=ifort -diag-disable=10448
 #fopt=-g -traceback -O2
 fopt=-g -traceback -check all -fpe0
 
@@ -53,9 +53,6 @@ DENTWOPNG = $(patsubst ${dira}/twopro%.dat,${dirf}/dentwo%.png,$(TWOPRO))
 VELTWOPNG = $(patsubst ${dira}/twopro%.dat,${dirf}/veltwo%.png,$(TWOPRO))
 PRETWOPNG = $(patsubst ${dira}/twopro%.dat,${dirf}/pretwo%.png,$(TWOPRO))
 
-# intgrated values 
-TOT   = $(patsubst ${dird}/unf%.dat,${dira}/tot%.dat,$(BIN))
-
 ##########################################
 # Movies
 ##########################################
@@ -92,9 +89,6 @@ timeevolution: ${timefile} ## time evolution
 
 ${timefile}: PlotTime.plt t-prof.dat
 	gnuplot PlotTime.plt
-
-t-prof.dat: MakeTimeseq.sh ${TOT}
-	./MakeTimeseq.sh
 
 #################
 # ffmpeg
@@ -158,8 +152,8 @@ ${ONEPRO}: ${ana} ${BIN} ${countfile}
 ${TWOPRO}: ${ana} ${BIN} ${countfile}
 	./${ana}
 
-${TOT}: ${ana} ${BIN} ${countfile}
-	./${ana}
+t-prof.dat: ${ana} ${BIN} ${countfile}
+	./${ana
 
 #################
 # simulation

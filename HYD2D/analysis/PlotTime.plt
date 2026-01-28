@@ -22,16 +22,43 @@ set style line 92 lt 2 lw 6 lc rgb "black" #
 
 input= "t-prof.dat"
 
-outputfile= "t-E.png"
-if(pngflag==1)set output outputfile
 
 set xlabel "Time [year]"
 set log x
 
-set ylabel "Explosion energy [erg]"
-year=60*60*24*365
+####
+outputfile= "t-R.png"
+if(pngflag==1)set output outputfile
+set ylabel "Radius [pc]"
+
 plot NaN notitle \
-, input  u ($1/year):2  notitle "Explosion energy" w l ls 1  \
+, input  u 1:2  notitle "Radius" w l ls 1  \
+
+####
+outputfile= "t-V.png"
+if(pngflag==1)set output outputfile
+set ylabel "Velocity [km/s]"
+set log y
+plot NaN notitle \
+, input  u 1:5  notitle "Luminosity" w l ls 1  \
+
+####
+outputfile= "t-L.png"
+if(pngflag==1)set output outputfile
+set ylabel "Luminosity [erg/s]"
+set log y
+plot NaN notitle \
+, input  u 1:6  notitle "Luminosity" w l ls 1  \
+
+####
+outputfile= "t-E.png"
+unset log y
+if(pngflag==1)set output outputfile
+set ylabel "Explosion energy [erg]"
+
+plot NaN notitle \
+, input  u 1:7  notitle "Explosion energy" w l ls 1  \
+
 
 reset
-if(pngflag==1)set term pop
+set term pop

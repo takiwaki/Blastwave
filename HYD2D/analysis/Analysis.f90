@@ -6,6 +6,9 @@ module unitsmod
   real(8),parameter::   kbol = 1.380649d-23     ! J/K
   real(8),parameter::   year = 365.0d0*24*60*60 ! sec
   
+  real(8),parameter:: mp=1.67262192369d-24  !! proton mass [g]
+  real(8),parameter:: kB=1.380649d-16  !! Boltzmann constant [erg/K]
+  real(8),parameter:: erg_to_keV= 6.242d8  !! erg => keV
 end module unitsmod
 
 module fieldmod
@@ -19,9 +22,11 @@ module fieldmod
     real(8),dimension(:),allocatable:: x1b,x2b,dvl1a
     real(8),dimension(:),allocatable:: x1a,x2a,dvl2a
     real(8),dimension(:,:,:),allocatable:: d,v1,v2,v3,p,ei,gp
+    real(8),dimension(:,:,:),allocatable:: Tem,edot
     real(8):: dx
     real(8):: gam,rho0,Eexp
-
+    real(8),dimension(:,:),allocatable:: rshock_ray
+    real(8):: rshock,Msw,kTshock,Vshock,Lbol
 end module fieldmod
 
 program data_analysis
@@ -42,9 +47,11 @@ program data_analysis
   FILENUMBER: do incr  = fbeg,fend
      write(6,*) "file index",incr
      call ReadData
+     call EstimateEmissivity
+     call FindShockRadius
      call Visualize1D
      call Visualize2D
-     call Integration
+     call TimeProfle
   enddo FILENUMBER
 
   stop
@@ -114,6 +121,74 @@ subroutine ReadData
   return
 end subroutine ReadData
 
+subroutine EstimateEmissivity
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+  logical:: is_inited
+  data is_inited / .false. /
+  if(.not. is_inited) then
+     allocate(Tem(in,jn,kn))
+     allocate(edot(in,jn,kn))
+     is_inited = .true.
+  endif
+  k=ks
+  do j=js,je
+  do i =is,ie
+     ! p = n k T => T = p/(n)/k since kbol[J/K] kbol*1.0d5 [erg/K] 
+     Tem(i,j,k) = p(i,j,k)/(d(i,j,k)/mp) / (kbol*1.0d5) ! [K]
+     edot(i,j,k) = 1.4d-27 * (d(i,j,k)/mp)**2 *sqrt(Tem(i,j,k)) ! erg/s/cm^3
+  enddo
+  enddo
+end subroutine EstimateEmissivity
+
+subroutine FindShockRadius
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+  real(8),dimension(:,:),allocatable,save:: pmax_ray,kTshock_ray,Vshock_ray
+  logical::is_inited
+  data is_inited /.false./
+
+  if(.not. is_inited)then
+     allocate(pmax_ray(jn,kn))
+     allocate(rshock_ray ,mold=pmax_ray)
+     allocate(kTshock_ray,mold=pmax_ray)
+     allocate(Vshock_ray ,mold=pmax_ray)
+  endif
+  
+  rshock_ray(:,:) = 0.0d0
+  pmax_ray(:,:) = 0.0d0
+  kTshock_ray(:,:) = 0.0d0
+  Vshock_ray(:,:)  = 0.0d0
+  k = ks
+  do j=js,je 
+     do i=is,ie
+        if(pmax_ray(j,k) < p(i,j,k)) then
+           pmax_ray(j,k) = p(i,j,k)
+           rshock_ray = x1b(i)
+           ! p = n T 
+           kTshock_ray(j,k) = (kbol*1.0d5)*Tem(i,j,k)*erg_to_keV ! T [keV]
+           Vshock_ray(j,k)  = v1(i,j,k)/1.0e5 ! cm/s => km/s
+        endif
+     enddo
+  enddo
+  rshock = 0.0d0
+  do j=js,je
+     if(rshock < rshock_ray(j,k) )then
+        rshock  =  rshock_ray(j,k)
+        kTshock = kTshock_ray(j,k)
+        Vshock  =  Vshock_ray(j,k)
+     endif
+  enddo
+  !print *, "rshock=",rshock/pc,"[pc]"
+  !print *, "kTshock=",kTshock,"[keV]"
+  !print *, "Vshock=",Vshock,"[km/s]"
+  is_inited = .true.
+end subroutine FindShockRadius
+
 subroutine Visualize2D
   use unitsmod
   use fieldmod
@@ -124,7 +199,7 @@ subroutine Visualize2D
   character(40)::filename
   integer,parameter::unit2D=432
 
-  real(8),dimension(:,:),allocatable,save::d2d,p2d,v12d
+  real(8),dimension(:,:),allocatable,save::d2d,p2d,v12d,ed2d
 
   logical,save:: is_inited
   data is_inited / .false. /
@@ -133,27 +208,31 @@ subroutine Visualize2D
      call makedirs(dirname)
      is_inited = .true.
      allocate( d2d(in,jn))
-     allocate( p2d(in,jn))
-     allocate(v12d(in,jn))
+     allocate( p2d,mold=d2d)
+     allocate(v12d,mold=d2d)
+     allocate(ed2d,mold=d2d)
   endif
 
   k = ks
 ! boundary 
   do i=is,ie
-      d(i,js-1,k) =  d(i,js,k)
-      p(i,js-1,k) =  p(i,js,k)
-     v1(i,js-1,k) = v1(i,js,k)
+      d(i,js-1,k) =   d(i,js,k)
+      p(i,js-1,k) =   p(i,js,k)
+     v1(i,js-1,k) =  v1(i,js,k)
+   edot(i,js-1,k) =edot(i,js,k)
 
-      d(i,je+1,k) =  d(i,je,k)
-      p(i,je+1,k) =  p(i,je,k)
-     v1(i,je+1,k) = v1(i,je,k)
+      d(i,je+1,k) =   d(i,je,k)
+      p(i,je+1,k) =   p(i,je,k)
+     v1(i,je+1,k) =  v1(i,je,k)
+   edot(i,je+1,k) =edot(i,je,k)
   enddo
 
   do j=js,je+1
   do i=is,ie
-       d2d(i,j) =  0.5d0*( d(i,j,k)+ d(i,j-1,k))
-       p2d(i,j) =  0.5d0*( p(i,j,k)+ p(i,j-1,k))
-      v12d(i,j) =  0.5d0*(v1(i,j,k)+v1(i,j-1,k))
+       d2d(i,j) =  0.5d0*(   d(i,j,k)+   d(i,j-1,k))
+       p2d(i,j) =  0.5d0*(   p(i,j,k)+   p(i,j-1,k))
+      v12d(i,j) =  0.5d0*(  v1(i,j,k)+  v1(i,j-1,k))
+      ed2d(i,j) =  0.5d0*(edot(i,j,k)+edot(i,j-1,k))
   enddo
   enddo
 
@@ -166,11 +245,11 @@ subroutine Visualize2D
 !                                    12345678    1234567890123   1234567890123   123456789012
   write(unit2D,'(1a,2(1x,a7,i0))') "#"," Nrad= ",ie-is+1," Nthe= ",je-js+2
 
-  write(unit2D,'(1a,5(1x,a13))') "#","1:r[cm] ","2:theta[rad] ","3:den[1/cm^3] ","4:p[erg/cm3] ","5:vel[cm/s] "
+  write(unit2D,'(1a,6(1x,a13))') "#","1:r[cm] ","2:theta[rad] ","3:den[1/cm^3] ","4:p[erg/cm3] ","5:vel[cm/s] ","6:edot[cgs]"
 
   do j=js,je+1
   do i=is,ie
-     write(unit2D,'(1x,SP,5(1x,E13.3))') x1b(i),x2a(j),d2d(i,j)/mu,p2d(i,j),v12d(i,j)
+     write(unit2D,'(1x,SP,6(1x,E13.3))') x1b(i),x2a(j),d2d(i,j)/mu,p2d(i,j),v12d(i,j),ed2d(i,j)
   enddo
      write(unit2D,*)
   enddo
@@ -235,15 +314,15 @@ subroutine Visualize1D
   return
 end subroutine Visualize1D
 
-subroutine Integration
+subroutine TimeProfle
   use unitsmod
   use fieldmod
   implicit none
   integer::i,j,k
 
-  character(20),parameter::dirname="output/"
+  character(20),parameter::dirname="./"
   character(40)::filename
-  integer,parameter::unittot=1234
+  integer,save::unittpr
   real(8)::Etot,pi
 
   logical,save:: is_inited
@@ -251,32 +330,40 @@ subroutine Integration
 
   if(.not. is_inited)then
      call makedirs(dirname)
-     is_inited = .true.
   endif
 
   pi = acos(-1.0d0)
+  Msw  = 0.0d0
+  Etot = 0.0d0
+  Lbol = 0.0d0
 
   Etot=0.0d0
   k=ks
   do j=js,je
   do i=is,ie
-     Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*dvl2a(j)*2.0d0*pi
+     if(x1b(i) <= rshock_ray(j,k) ) Msw  = Msw  + d(i,j,k)*dvl1a(i)*4.0d0*pi
+     Lbol = Lbol + edot(i,j,k) * dvl1a(i)*4.0d0*pi
+     Etot = Etot + (0.5d0*d(i,j,k)*(v1(i,j,k)**2+v2(i,j,k)**2)+ei(i,j,k))*dvl1a(i)*dvl2a(j)*2.0d0*pi
   enddo
   enddo
 
-  write(filename,'(a6,i5.5,a4)')"timpro",incr,".dat"
-  filename = trim(dirname)//filename
-  open(unittot,file=filename,status='replace',form='formatted')
-
+  if(.not. is_inited) then
+     write(filename,'(A)')"t-prof.dat"
+     filename = trim(dirname)//filename
+     print *,"time evolution is written in", filename
+     open(newunit=unittpr,file=filename,status='replace',form='formatted')
+     write(unittpr,'(1a,1x,A)') "#"," time[year] rshock[pc] Msw[Ms] Tshock[keV] Vshock[km/s] Lbol[erg/s] Etot[erg]"
+  endif
 !  write(unittot,'(1a,4(1x,E12.3))') "#",time/year
 !                                    12345678   1234567890123     1234567890123   123456789012
 !  write(unittot,'(1a,4(1x,a13))') "#","1:r[pc] ","2:den[1/cm^3] ","3:p[erg/cm3] ","4:vel[km/s] "
 
-  write(unittot,'(1x,4(1x,E13.3))') time,Etot
-  close(unittot)
+  write(unittpr,'(1x,7(1x,E13.3))') time/year,rshock/pc,Msw/Msolar,kTshock,Vshock,Lbol,Etot
+  ! close(unittot)
 
+  is_inited = .true.
   return
-end subroutine  Integration
+end subroutine  TimeProfle
 
 subroutine makedirs(outdir)
   implicit none

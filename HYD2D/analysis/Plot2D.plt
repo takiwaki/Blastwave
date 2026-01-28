@@ -135,6 +135,15 @@ splot [-srange:srange][-srange:srange] \
   ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($5):NaN) w pm3d \
 , ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($5):NaN) w pm3d \
 
+# Edot
+ofname = sprintf("figures/edtwo%05d.png",ifnum)
+print ofname
+if (pngflag==1) set output ofname
+
+splot [-srange:srange][-srange:srange] \
+  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($6):NaN) w pm3d \
+, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($6):NaN) w pm3d \
+
 
 unset label
 
