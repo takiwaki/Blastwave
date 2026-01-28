@@ -117,7 +117,7 @@ ofname = sprintf("figures/dentwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
 
-
+set palette defined (0.00 "#440154", 0.25 "#3b528b", 0.50 "#21908d", 0.75 "#5dc863", 1.00 "#fde725" ) # viridis
 splot [-srange:srange][-srange:srange] \
   ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($3):NaN) w pm3d \
 , ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($3):NaN) w pm3d \
@@ -127,8 +127,11 @@ splot [-srange:srange][-srange:srange] \
 ofname = sprintf("figures/pretwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
-
 set title "p [erg/cm^3]"
+
+
+set palette defined (0.00 "#000004",0.25 "#3b0f70",0.50 "#8c2981",0.75 "#de4968",1.00 "#fe9f6d" ) # magma
+
 splot [-srange:srange][-srange:srange] \
   ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($4):NaN) w pm3d \
 , ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($4):NaN) w pm3d \
@@ -140,6 +143,9 @@ ofname = sprintf("figures/veltwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
 
+
+set palette defined (0.00 "#0d0887", 0.25 "#7e03a8", 0.50 "#cc4778", 0.75 "#f89540", 1.00 "#f0f921" ) #plasma
+
 splot [-srange:srange][-srange:srange] \
   ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($5/norm):NaN) w pm3d \
 , ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($5/norm):NaN) w pm3d \
@@ -147,9 +153,11 @@ splot [-srange:srange][-srange:srange] \
 # Edot
 set title "edot [10^{-21}erg/cm^3/s]"
 norm=1.0e-21
-ofname = sprintf("figures/edtwo%05d.png",ifnum)
+ofname = sprintf("figures/edttwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
+
+set palette defined (0.00 "#000004",0.25 "#420a68",0.50 "#932667", 0.75 "#dd513a", 1.00 "#fba40a" ) # inferno
 
 splot [-srange:srange][-srange:srange] \
   ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($6/norm):NaN) w pm3d \
