@@ -12,8 +12,8 @@ ana=Analysis.x
 # complile options
 ######################
 fc=ifort -diag-disable=10448
-#fopt=-g -traceback -O2
-fopt=-g -traceback -check all -fpe0
+fopt=-g -traceback -O2
+#fopt=-g -traceback -check all -fpe0
 
 ##########################################
 # Timeseqencial data and figures
