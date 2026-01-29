@@ -112,15 +112,16 @@ set cbtics offset -0.5,0
 
 
 # Density
-set title "log(n [1/cm^3])"
+set title "n [1/cm^3]"
 ofname = sprintf("figures/dentwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
-set cbrange[-2:*]
+set cbrange[*:*]
 set palette defined (0.00 "#440154", 0.25 "#3b528b", 0.50 "#21908d", 0.75 "#5dc863", 1.00 "#fde725" ) # viridis
+
 splot [-srange:srange][-srange:srange] \
-  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?(log($3)):NaN) w pm3d \
-, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?(log($3)):NaN) w pm3d \
+  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($3):NaN) w pm3d \
+, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($3):NaN) w pm3d \
 
 
 # Pressure
@@ -128,7 +129,7 @@ ofname = sprintf("figures/pretwo%05d.png",ifnum)
 print ofname
 if (pngflag==1) set output ofname
 set title "log(p [erg/cm^3])"
-set cbrange[-20:*]
+set cbrange[*:*]
 set palette defined (0.00 "#000004",0.25 "#3b0f70",0.50 "#8c2981",0.75 "#de4968",1.00 "#fe9f6d" ) # magma
 
 splot [-srange:srange][-srange:srange] \
@@ -149,7 +150,7 @@ splot [-srange:srange][-srange:srange] \
 , ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($5/norm):NaN) w pm3d \
 
 # Edot
-set title "log(edot [erg/cm^3/s])"
+set title "edot [erg/cm^3/s]"
 norm=1.0e-21
 ofname = sprintf("figures/edttwo%05d.png",ifnum)
 print ofname
@@ -158,8 +159,8 @@ set cbrange[*:*]
 set palette defined (0.00 "#000004",0.25 "#420a68",0.50 "#932667", 0.75 "#dd513a", 1.00 "#fba40a" ) # inferno
 
 splot [-srange:srange][-srange:srange] \
-  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?(log($6)):NaN) w pm3d \
-, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?(log($6)):NaN) w pm3d \
+  ifnames u ( $1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($6):NaN) w pm3d \
+, ifnames u (-$1/pc*sin($2)):($1/pc*cos($2)):($1/pc<srange?($6):NaN) w pm3d \
 
 
 unset label
