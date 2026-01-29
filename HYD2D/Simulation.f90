@@ -64,6 +64,7 @@ end module eosmod
       integer,parameter::nden=1,nve1=2,nve2=3,nve3=4,nene=5,npre=6,ncsp=7
       integer,parameter::nhyd=7
       real(8),dimension(nhyd,in,jn,kn):: svc
+      real(8),dimension(in,jn,kn):: wshock
 
       integer,parameter::mudn=1,muvu=2,muvv=3,muvw=4,muet=5  &
      &                  ,mfdn=6,mfvu=7,mfvv=8,mfvw=9,mfet=10 &
@@ -182,11 +183,12 @@ end module eosmod
       integer,dimension(2) :: seed
       real(8),dimension(1) :: rnum
       real(8),parameter :: rrv =5.0d-2
+      real(8),parameter :: rc =3.0*pc
       
       real(8):: x,z
       
       pi =acos(-1.0d0)
-      dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
+      dr = 15.0d0*(x1a(is+1)-x1a(is))
       write(6,*) "shell length [pc]",dr/pc
 
 ! circum steller  medium
@@ -218,26 +220,31 @@ end module eosmod
              d(i,j,k) = max(rho1*(x1b(i)/dr)**(neu/(gam-1)),rho2)
              p(i,j,k) = pre1
             v1(i,j,k) = vel1*max(x1b(i)/dr,0.0d0)
-!         else if( 5.0d0*pc <x1b(i) .and. x1b(i) < 10.0d0*pc &
-!    &       .and. (0.5-0.2)*pi <x2b(j) .and. x2b(j) < (0.5+0.2)*pi )then
-!             d(i,j,k) = rho3
-!             p(i,j,k) = pre2
-!            v1(i,j,k) = 0.0d0
          else
-             d(i,j,k) = rho2
+             d(i,j,k) = rho2*min(1.0d0, (x1b(i)/rc)**(-9) )
              p(i,j,k) = pre2
             v1(i,j,k) = vel2
          endif
       enddo
       enddo
-      enddo
+   enddo
+   
+      write(6,*) rrv*100.0d0 &
+     & , "% of Randam Perturbation imposed on density"
+      seed(1) = 1
+      seed(2) = 1
+      call random_seed(PUT=seed(1:2))
 
       do k=ks,ke
       do j=js,je
-      do i=is,ie
-         x = x1b(i)*sin(x2b(j))
-         z = x1b(i)*cos(x2b(j))
-         !if( (x-2.5*pc)**2 + (z-0.5*pc)**2 < (1.0*pc)**2 ) d(i,j,k) = d(i,j,k) + 100.0d0*rho2
+         do i=is,ie
+            if(x1b(i) >= 0.9*rc .and.x1b(i) <= 1.1*rc )then
+               d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(20.0d0*x2b(j)      ) )
+               d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(12.0d0*x2b(j) +0.01) )
+               d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin( 8.0d0*x2b(j) +0.1 ) )
+            endif
+!         call random_number(rnum)
+!         if(x1b(i) > dr) d(i,j,k) = d(i,j,k)*(1.0d0 + rrv*(2.0d0*rnum(1)-1.0d0))
       enddo
       enddo
       enddo
@@ -417,7 +424,7 @@ end module eosmod
       use eosmod
       implicit none
       integer::i,j,k
-
+      real(8):: pl,pr,vl,vr,cl,cr,shock
 !      do j=1,jn-1
 
 !$omp parallel do collapse(3)
@@ -436,7 +443,6 @@ end module eosmod
 !         svc(nene,i,j,k) = csiso**2
 !         svc(npre,i,j,k) = d(i,j,k)*csiso**2
 !         svc(ncsp,i,j,k) = csiso
-
  ! for output
          p(i,j,k) = svc(npre,i,j,k) 
 
@@ -467,6 +473,65 @@ end module eosmod
       enddo
 !$end omp parallel
 
+!$omp parallel do collapse(3) private(pl,pr,vl,vr,cl,cr,shock)
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+      ! initial      
+         wshock(i,j,k) = 0.0d0
+      ! x minus 
+         pl = svc(npre,i-1,j,k)
+         pr = svc(npre,i  ,j,k)
+         vl = svc(nve1,i-1,j,k)
+         vr = svc(nve1,i  ,j,k)
+         cl = svc(ncsp,i-1,j,k)
+         cr = svc(ncsp,i  ,j,k)
+         shock= dble(&
+              (max(pl,pr) / min(pl, pr) > 1.5d0) &
+        .and. ((vr - vl) < -0.125d0 * (cr+cl))   &
+              )
+         wshock(i,j,k) = max(wshock(i,j,k),shock)
+      ! x plus 
+         pl = svc(npre,i  ,j,k)
+         pr = svc(npre,i+1,j,k)
+         vl = svc(nve1,i  ,j,k)
+         vr = svc(nve1,i+1,j,k)
+         cl = svc(ncsp,i  ,j,k)
+         cr = svc(ncsp,i+1,j,k)
+         shock= dble(&
+              (max(pl,pr) / min(pl, pr) > 1.5d0) &
+        .and. ((vr - vl) < -0.125d0 * (cr+cl))   &
+              )
+         wshock(i,j,k) = max(wshock(i,j,k),shock)
+      ! y minus
+         pl = svc(npre,i,j-1,k)
+         pr = svc(npre,i,j  ,k)
+         vl = svc(nve2,i,j-1,k)
+         vr = svc(nve2,i,j  ,k)
+         cl = svc(ncsp,i,j-1,k)
+         cr = svc(ncsp,i,j  ,k)
+         shock= dble(&
+              (max(pl,pr) / min(pl, pr) > 1.5d0) &
+        .and. ((vr - vl) < -0.125d0 * (cr+cl))   &
+              )
+         wshock(i,j,k) = max(wshock(i,j,k),shock)
+      ! y plus
+         pl = svc(npre,i,j  ,k)
+         pr = svc(npre,i,j+1,k)
+         vl = svc(nve2,i,j  ,k)
+         vr = svc(nve2,i,j+1,k)
+         cl = svc(ncsp,i,j  ,k)
+         cr = svc(ncsp,i,j+1,k)
+         shock= dble(&
+              (max(pl,pr) / min(pl, pr) > 1.5d0) &
+        .and. ((vr - vl) < -0.125d0 * (cr+cl))   &
+              )
+         wshock(i,j,k) = max(wshock(i,j,k),shock)
+         
+      enddo
+      enddo
+      enddo
+!$end omp parallel
 
       return
       end subroutine StateVector
@@ -533,10 +598,11 @@ end module eosmod
       real(8),dimension(nhyd):: Pleftc1, Pleftc2, Plefte
       real(8),dimension(nhyd):: Prigtc1, Prigtc2, Prigte
       real(8),dimension(2*mflx+madd):: leftco,rigtco
-      real(8),dimension(mflx):: nflux
+      real(8),dimension(mflx):: nfluxe,nfluxc
       real(8),dimension(in),save:: x1c,ctl,ctr
       real(8),dimension(in),save:: bck,frd,cf,cb
       real(8):: xii,cflo,cblo
+      real(8):: shock    
       logical,save:: is_inited
       data is_inited / .false. /
 !
@@ -564,7 +630,7 @@ end module eosmod
       is_inited = .true.
      endif
      k=ks
-!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nflux)
+!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nfluxe,nfluxc,shock)
       do j=js,je
       do i=is,ie+1
          Pleftc1(:) = svc(:,i-2,j,k)
@@ -651,15 +717,18 @@ end module eosmod
          rigtco(mcsp)= Prigte(ncsp)
          rigtco(mvel)= Prigte(nve1)
          rigtco(mpre)= Prigte(npre)
-         
-
-         call HLLE(leftco,rigtco,nflux)
-         !call HLLC(leftco,rigtco,nflux)
-         nflux1(mden,i,j,k)=nflux(mden)
-         nflux1(mrv1,i,j,k)=nflux(mrvu)
-         nflux1(mrv2,i,j,k)=nflux(mrvv)
-         nflux1(mrv3,i,j,k)=nflux(mrvw)
-         nflux1(meto,i,j,k)=nflux(meto)
+         !----------------------------
+         ! Shock 
+         !----------------------------
+         shock = max(wshock(i-1,j,k),wshock(i,j,k))
+         call HLLE(leftco,rigtco,nfluxe)
+         call HLLC(leftco,rigtco,nfluxc)
+         !shock = 1.0d0
+         nflux1(mden,i,j,k)=nfluxe(mden)*shock + (1.0d0-shock)*nfluxc(mden)
+         nflux1(mrv1,i,j,k)=nfluxe(mrvu)*shock + (1.0d0-shock)*nfluxc(mrvu)
+         nflux1(mrv2,i,j,k)=nfluxe(mrvv)*shock + (1.0d0-shock)*nfluxc(mrvv)
+         nflux1(mrv3,i,j,k)=nfluxe(mrvw)*shock + (1.0d0-shock)*nfluxc(mrvw)
+         nflux1(meto,i,j,k)=nfluxe(meto)*shock + (1.0d0-shock)*nfluxc(meto)
 
       enddo
       enddo
@@ -676,12 +745,13 @@ end module eosmod
       real(8),dimension(nhyd):: Pleftc1, Pleftc2, Plefte
       real(8),dimension(nhyd):: Prigtc1, Prigtc2, Prigte
       real(8),dimension(2*mflx+madd):: leftco,rigtco
-      real(8),dimension(mflx):: nflux
+      real(8),dimension(mflx):: nfluxe,nfluxc
 
       real(8),dimension(jn),save :: bck,frd,ctl,ctr
       real(8),dimension(jn),save :: cf,cb
       real(8),dimension(jn),save :: x2c
       real(8):: xjj,yjj,cflo,cblo
+      real(8):: shock
 
 !
 ! Mignone 2014 Ref. [1]
@@ -733,7 +803,7 @@ end module eosmod
      endif
   
      k=ks
-!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nflux)
+!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nfluxe,nfluxc,shock)
      do i=is,ie
      do j=js,je+1
          Pleftc1(:) = svc(:,i,j-2,k)
@@ -813,15 +883,18 @@ end module eosmod
          rigtco(mcsp)= Prigte(ncsp)
          rigtco(mvel)= Prigte(nve2)
          rigtco(mpre)= Prigte(npre)
-         
-         !call HLLC(leftco,rigtco,nflux)
-         call HLLE(leftco,rigtco,nflux)
-
-         nflux2(mden,i,j,k)=nflux(mden)
-         nflux2(mrv1,i,j,k)=nflux(mrvw)
-         nflux2(mrv2,i,j,k)=nflux(mrvu) ! mrv2=3, mrvu=2
-         nflux2(mrv3,i,j,k)=nflux(mrvv)
-         nflux2(meto,i,j,k)=nflux(meto)
+         !----------------------------
+         ! Shock 
+         !----------------------------
+         shock = max(wshock(i,j-1,k),wshock(i,j,k))
+         call HLLE(leftco,rigtco,nfluxe)
+         call HLLC(leftco,rigtco,nfluxc)
+         !shock = 1.0d0
+         nflux2(mden,i,j,k)=nfluxe(mden)*shock + nfluxc(mden)*(1.0d0-shock)
+         nflux2(mrv1,i,j,k)=nfluxe(mrvw)*shock + nfluxc(mrvw)*(1.0d0-shock)
+         nflux2(mrv2,i,j,k)=nfluxe(mrvu)*shock + nfluxc(mrvu)*(1.0d0-shock)! mrv2=3, mrvu=2
+         nflux2(mrv3,i,j,k)=nfluxe(mrvv)*shock + nfluxc(mrvv)*(1.0d0-shock)
+         nflux2(meto,i,j,k)=nfluxe(meto)*shock + nfluxc(meto)*(1.0d0-shock)
       enddo
       enddo   
 !$end omp parallel
