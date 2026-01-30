@@ -115,11 +115,10 @@
       call ConsvVariable
       write(6,*) "entering main loop"
 ! main loop
-                                  write(6,*)"step","time [yr]","dt [yr]"
       mloop: do nhy=1,nhymax
          call TimestepControl
          if(mod(nhy,nhyspan) .eq. 0 )then
-            write(6,*)nhy,time/year,dt/year
+            print *,"step=",nhy," time [yr]=",time/year," dt [yr]=",dt/year
             call flush(6)
          endif
 !         write(6,*)nhy,time/year,dt/year
@@ -138,14 +137,16 @@
       end program main
 
       subroutine print_omp_threads()
-        use omp_lib
+        !$ use omp_lib
         implicit none
         
         integer :: tid, nthreads
+        data tid / 0 /
+        data nthreads / 0 /
         
         !$omp parallel private(tid)
-        tid = omp_get_thread_num()
-        nthreads = omp_get_num_threads()
+        !$tid = omp_get_thread_num()
+        !$nthreads = omp_get_num_threads()
         
         !$omp critical
         write(*,'(A,I4,A,I4)') 'I use thread ', tid, &
@@ -546,7 +547,6 @@
       implicit none
       integer::i,j,k
       real(8):: pl,pr,vl,vr,cl,cr,shock
-!      do j=1,jn-1
 
 !$omp parallel do collapse(3)
       do k=ks,ke
@@ -676,7 +676,10 @@
       return
       end subroutine minmod
 
-
+!=======================================================================
+! SUBROUTINE: vanLeer
+! Slope limiter: van Leer.
+!=======================================================================
       subroutine vanLeer(dvp,dvm,cf,cb,dv)
       use fluxmod, only : nhyd
       implicit none
@@ -1483,7 +1486,7 @@
       write(unitbin) hydout(:,:,:,:)
       close(unitbin)
 
-      write(6,*) "output:",nout,"time=",time/year," year, dt=",dt/year,"year"
+      write(6,'(A,I0,A,F10.2,A,F10.2,A)') "output:", nout, ", time=", time/year, " year, dt=", dt/year, " year"
 
       nout=nout+1
       tout=time
