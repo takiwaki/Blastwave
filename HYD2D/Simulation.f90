@@ -135,11 +135,38 @@ end module eosmod
       implicit none
       real(8)::dx,dy
       integer::i,j,k
-      write(6,*) "r:",x1min,x1max
-      dx=(x1max-x1min)/izones
-      do i=1,in
-         x1a(i) = dx*(i-(mgn+1))+x1min
-      enddo
+      integer::mode
+      integer,parameter:: linear=1,logarithmic=2
+      real(8),parameter::eps=1.0d-8
+      real(8):: r,f,df
+      integer:: it,n
+      print *, "r:",x1min/pc,"-",x1max/pc
+      mode = logarithmic
+      select case(mode)
+         case(linear)
+            dx=(x1max-x1min)/izones
+            do i=1,in
+               x1a(i) = dx*(i-(mgn+1))+x1min
+            enddo
+         case(logarithmic)
+            dx=(x1max-x1min)/izones/10.0d0 ! 10 times finer grid than linear
+            n = izones
+            r = 1.01d0
+            do it=1,60
+               f  = (r**n-1)/(r-1) - (x1max-x1min)/dx
+               if(abs(f) < eps) exit
+               df = (n*r**(n-1)*(r-1) - (r**n-1)  )/(r-1)**2
+               r  = r - f/df
+               if(it == 60) stop "cannot make grid"
+            enddo
+            print *, "dx,r",dx/pc,r
+            x1a(is) = x1min
+            do i=is,in-1
+               x1a(i+1) = x1a(i)+ dx*r**(i-is)
+            enddo
+            x1a(is-1) = x1a(is)-dx
+            x1a(is-2) = x1a(is-1)-dx
+      end select
       do i=1,in-1
          x1b(i) = 0.5d0*(x1a(i+1)+x1a(i))
       enddo
@@ -171,84 +198,172 @@ end module eosmod
       use eosmod
       implicit none
       integer::i,j,k
-      real(8),parameter:: neu = 3.0d0
-      real(8):: rho1,rho2,rho3
-      real(8):: ein0
+      real(8):: pi
+      ! paramters
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta
+      real(8),parameter:: foe=1.0d51 !! fifty one erg
+      real(8):: timezero,rc,rism
+      ! profile
+      integer:: rhoprof
+      integer,parameter:: constantism=1,powerlaw=2
+      ! profile
+      integer:: npower = 9
+      real(8):: rho1,rho2
       real(8):: pre1,pre2
       real(8):: vel1,vel2
-      real(8):: dr
-      real(8):: pi
-      real(8):: frac,eexp
-
+      real(8):: ein0
+      
       integer,dimension(2) :: seed
       real(8),dimension(1) :: rnum
       real(8),parameter :: rrv =5.0d-2
-      real(8),parameter :: rc =3.0*pc
       
       real(8):: x,z
-      
       pi =acos(-1.0d0)
-      dr = 15.0d0*(x1a(is+1)-x1a(is))
-      write(6,*) "shell length [pc]",dr/pc
 
-! circum steller  medium
-      rho2 = 1.0d0*mu ! Intersteller medium 1 [1/cm^3]
-      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
-      vel2 = 0.0d0
-
-! blast wave
-      frac = 0.8d0
-      rho1 = (1.0d0*Msolar)/(4.0*pi/3.0d0*dr**3)
-      eexp = frac*(1.0d51)
-      pre1 = eexp/(4.0*pi/3.0d0*dr**3)*(gam-1.0d0)  
-      vel1 = sqrt((1.0d0-frac)*eexp/(4.0*pi/3.0d0*dr**3)/rho1)
-
-! dense clamp
-      rho3 = 3.0d0*mu ! Intersteller medium 1 [1/cm^3]
+      ! paramter
+      timezero = 10.0d0 * year
+      Eexp = 1.0*foe
+      frac = 0.5d0
+      Ekin = frac*Eexp
+      Eth  = (1.0d0-frac)*Eexp
+      Mejcta = 5.0d0*Msolar
       
-      write(6,*) "Eex= ",frac   ,"[10^51 erg]"
-      write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
-      write(6,*) "vel= ",vel1   ,"[cm/s]"
-      write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
+      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
+      print *, "Mej = ",Mejcta/Msolar," [M_s]"
+      print *, "t_0 = ",timezero/year," [year]"
+      print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
+      print *, "Eth = ",Eth /foe     ," [10^51 erg]"
+      rhoprof = constantism
+      select case(rhoprof)
+      case(constantism)
+         vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
+         rc   = vel1*timezero
+         print *, "Ejecta length [pc]",rc/pc
+         if(rc < x1a(is+5)-x1a(is) ) then
+            print *, "resolution is not enough reconsider the parameters"
+            print *, "5 mesh dr [pc]:",(x1a(is+5)-x1a(is))/pc
+            stop
+         endif
+         ! blast wave
+         rho1 = Mejcta/(4.0*pi/3.0d0*rc**3)
+         pre1 = Eth/(4.0*pi/3.0d0*rc**3)*(gam-1.0d0)  
+      
+         print *, "Inside shell"
+         print *, "rho= ",rho1/mu,"[1/cm^3]"
+         print *, "vel= ",vel1/1.0e5,"[km/s]"
+         print *, "pre= ",pre1   ,"[erg/cm^3]"
+         
+         ! interstellar  medium
+         rho2 = 1.0d0*mu ! Interstellar medium 1 [1/cm^3]
+         pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+         vel2 = 0.0d0
+         print *, "Outside shell, rho(r) = rho_ism (constant)"
+         print *, "rho= ",rho2/mu,"[1/cm^3]"
+      case(powerlaw)
+         vel1 = sqrt(10.0d0*(npower-5)/3.0d0/(npower-3)*Ekin/Mejcta)
+         rc   = vel1*timezero
+         print *, "Ejecta length [pc]",rc/pc
+         
+         if(rc < x1a(is+8)-x1a(is) ) then
+            print *, "resolution is not enough reconsider the parameters"
+            print *, "8 mesh dr [pc]:",(x1a(is+8)-x1a(is))/pc
+            stop
+         endif
+         ! blast wave
+         rho1 = Mejcta/(4.0*pi/3.0d0*rc**3)/(1.0d0/3.0d0 + ((rism/rc)**(3-npower)-1)/(3-npower) )
+         pre1 = Eth/(4.0*pi/3.0d0*rc**3)*(gam-1.0d0)
+         
+         ! inter steller medium
+         rho2 = 1.0d0*mu ! Intersteller medium 1 [1/cm^3]
+         pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+         vel2 = 0.0d0
+         
+         rism= rc * (rho1/rho2) **(1.0d0/npower)
+         print *, "Inside shell"
+         print *, "rho= ",rho1/mu,"[1/cm^3]"
+         print *, "vel= ",vel1/1.0e5,"[km/s]"
+         print *, "pre= ",pre1   ,"[erg/cm^3]"
+
+         print *, "Outside shell, rho^-n"
+         
+         print *, "ism starts at r=",rism/pc,"pc"
+         
+         print *, "rho= ",rho2/mu,"[1/cm^3]"
+         
+      end select
+      
      
       d(:,:,:) = rho2
   
-      do k=ks,ke
-      do j=js,je
-      do i=is,ie
-         if(x1b(i) < dr)then
-             d(i,j,k) = max(rho1*(x1b(i)/dr)**(neu/(gam-1)),rho2)
-             p(i,j,k) = pre1
-            v1(i,j,k) = vel1*max(x1b(i)/dr,0.0d0)
-         else
-             d(i,j,k) = rho2*min(1.0d0, (x1b(i)/rc)**(-9) )
-             p(i,j,k) = pre2
-            v1(i,j,k) = vel2
-         endif
-      enddo
-      enddo
-   enddo
-   
-      write(6,*) rrv*100.0d0 &
-     & , "% of Randam Perturbation imposed on density"
-      seed(1) = 1
-      seed(2) = 1
-      call random_seed(PUT=seed(1:2))
-
-      do k=ks,ke
-      do j=js,je
+      select case(rhoprof)
+      case(constantism)
+         do k=ks,ke
+         do j=js,je
          do i=is,ie
-            if(x1b(i) >= 0.9*rc .and.x1b(i) <= 1.1*rc )then
+            if(x1b(i) < rc)then
+                d(i,j,k) = rho1
+                p(i,j,k) = pre1
+               v1(i,j,k) = vel1*max(x1b(i)/rc,0.0d0)
+            else
+                d(i,j,k) = rho2
+                p(i,j,k) = pre2
+               v1(i,j,k) = vel2
+            endif
+         enddo
+         enddo
+         enddo
+
+         print *, rrv*100.0d0 &
+              & , "% of Randam Perturbation imposed on density"
+         seed(1) = 1
+         seed(2) = 1
+         call random_seed(PUT=seed(1:2))
+
+         do k=ks,ke
+         do j=js,je
+         do i=is,ie
+            call random_number(rnum)
+            if(x1b(i) > rc) d(i,j,k) = d(i,j,k)*(1.0d0 + rrv*(2.0d0*rnum(1)-1.0d0))
+         enddo
+         enddo
+         enddo
+      
+      case(powerlaw)
+         do k=ks,ke
+         do j=js,je
+         do i=is,ie
+            if(x1b(i) < rc)then
+                d(i,j,k) = rho1
+                p(i,j,k) = pre1
+               v1(i,j,k) = vel1*max(x1b(i)/rc,0.0d0)
+            elseif(x1b(i) < rism)then
+                d(i,j,k) = max(rho1*(x1b(i)/rc)**(-npower),rho2)
+                p(i,j,k) = pre2
+               v1(i,j,k) = vel2
+            else
+                d(i,j,k) = rho2
+                p(i,j,k) = pre2
+               v1(i,j,k) = vel2
+            endif
+         enddo
+         enddo
+         enddo
+      
+
+         do k=ks,ke
+         do j=js,je
+         do i=is,ie
+            if(x1b(i) >= 0.9*rism .and.x1b(i) <= rism )then
                d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(20.0d0*x2b(j)      ) )
                d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(12.0d0*x2b(j) +0.01) )
                d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin( 8.0d0*x2b(j) +0.1 ) )
             endif
-!         call random_number(rnum)
-!         if(x1b(i) > dr) d(i,j,k) = d(i,j,k)*(1.0d0 + rrv*(2.0d0*rnum(1)-1.0d0))
-      enddo
-      enddo
-      enddo
-
+         enddo
+         enddo
+         enddo
+   
+      end select
+      
       eimin = 1.0d-5*pre2/(gam-1.0d0)
       
       do k=ks,ke
@@ -1330,7 +1445,7 @@ end module eosmod
       write(unitbin) hydout(:,:,:,:)
       close(unitbin)
 
-      write(6,*) "output:",nout,"time=",time,"dt=",dt
+      write(6,*) "output:",nout,"time=",time/year," year, dt=",dt/year,"year"
 
       nout=nout+1
       tout=time
