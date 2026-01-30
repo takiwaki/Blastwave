@@ -253,7 +253,7 @@ end module eosmod
       print *, "t_0 = ",timezero/year," [year]"
       print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
       print *, "Eth = ",Eth /foe     ," [10^51 erg]"
-      timezero = 100.0d0 * year
+      timezero = 10.0d0 * year
       vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
       rc   = vel1*timezero
       print *, "Ejecta length [pc]",rc/pc
