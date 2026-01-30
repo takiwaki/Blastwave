@@ -363,6 +363,7 @@ end module eosmod
       use commons
       implicit none
       integer::i,j,k
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -377,6 +378,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
       
       return
       end subroutine Consvvariable
@@ -390,6 +392,7 @@ end module eosmod
       use eosmod
       implicit none
       integer::i,j,k
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -412,6 +415,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
       return
       end subroutine PrimVariable
@@ -430,6 +434,7 @@ end module eosmod
       real(8)::dtmin
       integer::i,j,k
       dtmin=1.0d90
+!$omp parallel do reduction(min:dtmin) private(dtl1,dtl2,dtl3,dtlocal), collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -442,6 +447,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
       dt = Cour * dtmin
 !      write(6,*)"dt",dt
@@ -642,7 +648,7 @@ end module eosmod
       is_inited = .true.
      endif
      k=ks
-!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nfluxe,nfluxc,shock)
+!$omp parallel do collapse(2) private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nfluxe,nfluxc,shock)
       do j=js,je
       do i=is,ie+1
          Pleftc1(:) = svc(:,i-2,j,k)
@@ -989,6 +995,7 @@ end module eosmod
       implicit none
       integer :: i,j,k,n
 
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie+1
@@ -1003,6 +1010,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
       
 
       return
@@ -1033,6 +1041,7 @@ end module eosmod
       endif
 
 
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=is,ie
@@ -1072,6 +1081,7 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
       return
       end subroutine UpdateConsv
@@ -1139,7 +1149,8 @@ end module eosmod
       write(unitbin) hydout(:,:,:,:)
       close(unitbin)
 
-      write(6,*) "output:",nout,time,dt
+      
+      write(6,'(A,I0,A,F10.2,A,F10.2,A)') "output:", nout, ", time=", time/year, " year, dt=", dt/year, " year"
 
       nout=nout+1
       tout=time
