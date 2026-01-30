@@ -1,4 +1,8 @@
 
+!=======================================================================
+!> MODULE: unitsmod
+!> Physical unit constants used throughout the code (cgs-like).
+!=======================================================================
       module unitsmod
       implicit none
       real(8),parameter::    pc  = 3.085677581d18   ! parsec in [cm]
@@ -9,20 +13,26 @@
 
       end module unitsmod
 
+!=======================================================================
+!> MODULE: commons
+!> Global simulation parameters, grid arrays, and hydrodynamic state variables shared by routines.
+!=======================================================================
       module commons
       use unitsmod
       implicit none
-      integer::nhy
-      integer,parameter::nhymax=1000000
-      real(8)::time,dt
-      real(8),parameter:: Coul=0.25d0
+      integer::nhy                       !! current hydro step counter (number of time steps taken)
+      integer,parameter::nhymax=1000000  !! Maximum number of time steps allowed (safety cap)
+      real(8)::time                      !! time: current simulation time [s]
       data time / 0.0d0 /
-      real(8),parameter:: timemax=2.0d3*year
-      real(8),parameter:: dtout=timemax/200
+      real(8)::dt                        !! current time step [s]
+      real(8),parameter:: Cour=0.25d0    !! CFL number (Courant factor) controlling stability (dt <= CFL * dx / wave_speed)
+      
+      real(8),parameter:: timemax=2.0d3*year !! Maximum physical time to evolve the simulation up to
+      real(8),parameter:: dtout=timemax/200  !! Output interval: write snapshots every dtout seconds
 
-      integer,parameter::izones=200
+      integer,parameter::izones=200 !! Number of active radial zones (excluding ghost zones)
       integer,parameter::jzones=100
-      integer,parameter::mgn=2
+      integer,parameter::mgn=2      !! Number of ghost cells on each boundary
       integer,parameter::in=izones+2*mgn+1 &
      &                  ,jn=jzones+2*mgn+1 &
      &                  ,kn=1
@@ -34,21 +44,28 @@
      &                  ,ke=1
 
 
-      real(8),parameter:: x1min=0.0d0,x1max=10.0d0*pc
-      real(8),dimension(in)::x1a,x1b,dvl1a
+      real(8),parameter:: x1min=0.0d0,x1max=10.0d0*pc !! Radial domain: x1min (inner radius) to x1max (outer radius)
+      real(8),dimension(in)::x1a,x1b,dvl1a            !! x1a: radial cell edge positions; x1b: radial cell center positions; dvl1a: geometric volume factors
 
       real(8),parameter:: x2min=0.0d0,x2max=acos(-1.0)
       real(8),dimension(jn)::x2a,x2b,dx2a,dvl2a
 
       real(8),dimension(kn)::x3a,x3b
 
+      !> Conservative variables: d=rho, et=total energy density, mv1..3=momentum density components
       real(8),dimension(in,jn,kn)::d,et,mv1,mv2,mv3
+      !> Primitive variables: p=pressure, ei=internal energy density, v1..3=velocity components, cs=sound speed
       real(8),dimension(in,jn,kn)::p,ei,v1,v2,v3,cs
+      !> Geometric/metric terms for spherical coordinates (used for source terms)
       real(8),dimension(in,jn,kn)::gp,gp1a,gp2a
 
 
       end module commons
      
+!=======================================================================
+! MODULE: eosmod
+! Equation-of-state (EOS) helpers: convert between pressure, internal energy, sound speed, etc.
+!=======================================================================
       module eosmod
       implicit none
 ! adiabatic
@@ -56,8 +73,12 @@
       real(8)::eimin !! minimum energy
 ! isothermal
 !      real(8)::csiso  !! isothemal sound speed
-end module eosmod
+      end module eosmod
 
+!=======================================================================
+! MODULE: fluxmod
+! Reconstruction, Riemann solver, and numerical flux routines for the hydrodynamics update.
+!=======================================================================
       module fluxmod
       use commons, only : in,jn,kn
       implicit none
@@ -79,6 +100,10 @@ end module eosmod
 
       end module fluxmod
 
+!=======================================================================
+! PROGRAM: main
+! Main driver: set up grid/problem, then advance the solution in time and write outputs.
+!=======================================================================
       program main
       use commons
       implicit none
@@ -130,6 +155,10 @@ end module eosmod
      
       end subroutine print_omp_threads
 
+!=======================================================================
+! SUBROUTINE: GenerateGrid
+! Build the 1D spherical radial grid (cell centers/edges) and metric factors.
+!=======================================================================
       subroutine GenerateGrid
       use commons
       implicit none
@@ -193,6 +222,10 @@ end module eosmod
       return
       end subroutine GenerateGrid
 
+!=======================================================================
+! SUBROUTINE: GenerateProblem
+! Set initial conditions for the blast wave / ejecta and ambient medium.
+!=======================================================================
       subroutine GenerateProblem
       use commons
       use eosmod
@@ -335,7 +368,10 @@ end module eosmod
       return
       end subroutine GenerateProblem
 
-
+!=======================================================================
+! SUBROUTINE: BoundaryCondition
+! Apply boundary conditions at inner/outer radial boundaries (ghost zones).
+!=======================================================================
       subroutine BoundaryCondition
       use commons
       implicit none
@@ -398,6 +434,10 @@ end module eosmod
       return
       end subroutine BoundaryCondition
 
+!=======================================================================
+! SUBROUTINE: ConsvVariable
+! Convert primitive variables (rho, v, p) to conservative variables (mass, momentum, energy).
+!=======================================================================
       subroutine ConsvVariable
       use commons
       implicit none
@@ -423,6 +463,10 @@ end module eosmod
       return
       end subroutine Consvvariable
 
+!=======================================================================
+! SUBROUTINE: PrimVariable
+! Convert conservative variables back to primitive variables, enforcing floors if needed.
+!=======================================================================
       subroutine PrimVariable
       use commons
       use eosmod
@@ -457,6 +501,10 @@ end module eosmod
       return
       end subroutine PrimVariable
 
+!=======================================================================
+! SUBROUTINE: TimestepControl
+! Compute stable time step from CFL condition using local wave speeds.
+!=======================================================================
       subroutine TimestepControl
       use commons
       implicit none
@@ -482,11 +530,15 @@ end module eosmod
       enddo
 !$end omp parallel
 
-      dt = Coul * dtmin
+      dt = Cour * dtmin
 !      write(6,*)"dt",dt
       return
       end subroutine TimestepControl
 
+!=======================================================================
+! SUBROUTINE: StateVector
+! Construct state vectors used by the Riemann solver (e.g., for left/right reconstructed states).
+!=======================================================================
       subroutine StateVector
       use commons
       use fluxmod
@@ -605,6 +657,10 @@ end module eosmod
       return
       end subroutine StateVector
 
+!=======================================================================
+! SUBROUTINE: minmod
+! Slope limiter: minmod.
+!=======================================================================
       subroutine minmod(a,b,d)
       use fluxmod, only : nhyd
       implicit none
@@ -642,6 +698,10 @@ end module eosmod
       return
       end subroutine vanLeer
 
+!=======================================================================
+! SUBROUTINE: MClimiter
+! Slope limiter: monotonized central (MC).
+!=======================================================================
       subroutine MClimiter(a,b,c,d)
       use fluxmod, only : nhyd
       implicit none
@@ -658,6 +718,10 @@ end module eosmod
       return
       end subroutine MClimiter
  
+!=======================================================================
+! SUBROUTINE: NumericalFlux1
+! Compute intercell numerical flux using chosen reconstruction + Riemann solver.
+!=======================================================================
       subroutine NumericalFlux1
       use commons, only: is,ie,in,js,je,jn,ks,ke,kn,mgn,x1a,x1b
       use fluxmod
@@ -971,6 +1035,10 @@ end module eosmod
       return
       end subroutine Numericalflux2
 
+!=======================================================================
+! SUBROUTINE: HLLE
+! Approximate Riemann solver: HLLE.
+!=======================================================================
       subroutine HLLE(leftst,rigtst,nflux)
       use fluxmod
       implicit none
@@ -1000,6 +1068,10 @@ end module eosmod
       return
       end subroutine HLLE
 
+!=======================================================================
+! SUBROUTINE: HLLC
+! Approximate Riemann solver: HLLC (captures contact discontinuity).
+!=======================================================================
       subroutine HLLC(leftst,rigtst,nflux)
 !=====================================================================
 !
@@ -1193,6 +1265,10 @@ end module eosmod
       return
       end subroutine HLLC
 
+!=======================================================================
+! SUBROUTINE: GravForce
+! Optional gravitational source term (often disabled for blastwave tests).
+!=======================================================================
       subroutine GravForce
       use commons
       use fluxmod
@@ -1247,6 +1323,10 @@ end module eosmod
       return
       end subroutine  GravForce
 
+!=======================================================================
+! SUBROUTINE: UpdateConsv
+! Update conservative variables using flux divergence and source terms (spherical geometry).
+!=======================================================================
       subroutine UpdateConsv
       use commons
       use fluxmod
@@ -1338,6 +1418,10 @@ end module eosmod
       return
       end subroutine UpdateConsv
 
+!=======================================================================
+! SUBROUTINE: Output
+! Write snapshots to disk (primitive and/or conservative variables).
+!=======================================================================
       subroutine Output
       use commons
       implicit none
@@ -1406,7 +1490,10 @@ end module eosmod
 
       return
       end subroutine Output
-
+!=======================================================================
+! SUBROUTINE: makedirs
+! Create output directory path (utility).
+!=======================================================================
       subroutine makedirs(outdir)
       implicit none
       character(len=*), intent(in) :: outdir
