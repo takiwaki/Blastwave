@@ -27,7 +27,7 @@
       ! time: current simulation time [s]; dt: current time step [s]
       real(8)::time,dt
       ! CFL number (Courant factor) controlling stability (dt <= CFL * dx / wave_speed)
-      real(8),parameter:: Coul=0.1d0
+      real(8),parameter:: Cour=0.1d0
       data time / 0.0d0 /
       ! Maximum physical time to evolve the simulation up to
       real(8),parameter:: timemax=2.0d3*year
@@ -91,6 +91,7 @@ end module eosmod
       integer,parameter::nden=1,nve1=2,nve2=3,nve3=4,nene=5,npre=6,ncsp=7
       integer,parameter::nhyd=7
       real(8),dimension(nhyd,in,jn,kn):: svc
+      real(8),dimension(in,jn,kn):: wshock
 
       integer,parameter::mudn=1,muvu=2,muvv=3,muvw=4,muet=5  &
      &                  ,mfdn=6,mfvu=7,mfvv=8,mfvw=9,mfet=10 &
@@ -114,6 +115,7 @@ end module eosmod
       use commons
       implicit none
       integer,parameter:: nhyspan=1000
+      call print_omp_threads
       write(6,*) "setup grids and fields"
       call GenerateGrid
       call GenerateProblem
@@ -122,8 +124,10 @@ end module eosmod
 ! main loop
       mloop: do nhy=1,nhymax
          call TimestepControl
-!         if(mod(nhy,nhyspan) .eq. 0 ) write(6,*)nhy,time/year,dt/year
-         print *,"step=",nhy," time [yr]=",time/year," dt [yr]=",dt/year
+         if(mod(nhy,nhyspan) .eq. 0 )then
+            print *,"step=",nhy," time [yr]=",time/year," dt [yr]=",dt/year
+            call flush(6)
+         endif
          call BoundaryCondition
          call StateVector
          call NumericalFlux1
@@ -137,6 +141,24 @@ end module eosmod
       write(6,*) "program has been finished"
       end program main
 
+      subroutine print_omp_threads()
+        !$ use omp_lib
+        implicit none
+        
+        integer :: tid, nthreads
+        data tid / 0 /
+        data nthreads / 0 /
+        !$omp parallel private(tid)
+        !$ tid = omp_get_thread_num()
+        !$nthreads = omp_get_num_threads()
+        
+        !$omp critical
+        write(*,'(A,I4,A,I4)') 'I use thread ', tid, &
+             ' / total threads = ', nthreads
+        !$omp end critical
+        !$omp end parallel
+     
+      end subroutine print_omp_threads
 !=======================================================================
 ! SUBROUTINE: GenerateGrid
 ! Build the 1D spherical radial grid (cell centers/edges) and metric factors.
@@ -146,10 +168,38 @@ end module eosmod
       implicit none
       real(8)::dx,dy
       integer::i,j,k
-      dx=(x1max-x1min)/izones
-      do i=1,in
-         x1a(i) = dx*(i-(mgn+1))+x1min
-      enddo
+      integer::mode
+      integer,parameter:: linear=1,logarithmic=2
+      real(8),parameter::eps=1.0d-8
+      real(8):: r,f,df
+      integer:: it,n
+      print *, "r:",x1min/pc,"-",x1max/pc
+      mode = logarithmic
+      select case(mode)
+         case(linear)
+            dx=(x1max-x1min)/izones
+            do i=1,in
+               x1a(i) = dx*(i-(mgn+1))+x1min
+            enddo
+         case(logarithmic)
+            dx=(x1max-x1min)/izones/10.0d0 ! 10 times finer grid than linear
+            n = izones
+            r = 1.01d0
+            do it=1,60
+               f  = (r**n-1)/(r-1) - (x1max-x1min)/dx
+               if(abs(f) < eps) exit
+               df = (n*r**(n-1)*(r-1) - (r**n-1)  )/(r-1)**2
+               r  = r - f/df
+               if(it == 60) stop "cannot make grid"
+            enddo
+            print *, "dx,r",dx/pc,r
+            x1a(is) = x1min
+            do i=is,in-1
+               x1a(i+1) = x1a(i)+ dx*r**(i-is)
+            enddo
+            x1a(is-1) = x1a(is)-dx
+            x1a(is-2) = x1a(is-1)-dx
+      end select
       do i=1,in-1
          x1b(i) = 0.5d0*(x1a(i+1)+x1a(i))
       enddo
@@ -169,55 +219,79 @@ end module eosmod
       use eosmod
       implicit none
       integer::i,j,k
-      real(8),parameter:: neu = 3.0d0
+      real(8):: pi
+      ! paramters
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta
+      real(8),parameter:: foe=1.0d51 !! fifty one erg
+      real(8):: timezero,rc,rism
+      ! profile
+      integer:: rhoprof
+      integer,parameter:: constantism=1,powerlaw=2
+      ! profile
+      integer:: npower
       real(8):: rho1,rho2
-      real(8):: ein0
       real(8):: pre1,pre2
       real(8):: vel1,vel2
-      real(8):: dr
-      real(8):: pi
-      real(8):: frac,eexp,vol
-      real(8):: Mejecta, EexpThermal,EexpKinetic,RhoMedium, TMedium
-
+      real(8):: ein0
+      
+      integer,dimension(2) :: seed
+      real(8),dimension(1) :: rnum
+      real(8),parameter :: rrv =5.0d-2
+      
+      real(8):: x,z
       pi =acos(-1.0d0)
-      dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
-      write(6,*) "shell length [pc]",dr/pc
 
-! parameters
-      Mejecta = 10.0d0 ! M_sun
-      EexpThermal = 0.8 ! 10^51 erg
-      EexpKinetic = 0.2 ! 10^51 erg
-      RhoMedium   = 1.0 ! 1/cm^3
-      TMedium     = 1.0d4 ! 10^4 [K]
-! circum stellar  medium
-      rho2 = RhoMedium * mu ! Interstellar medium 1 [g/cm^3]
-      pre2 = rho2* kbol * Tmedium
+      ! paramter
+      Eexp = 1.0*foe
+      frac = 0.5d0
+      Ekin = frac*Eexp
+      Eth  = (1.0d0-frac)*Eexp
+      Mejcta = 5.0d0*Msolar
+      
+      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
+      print *, "Mej = ",Mejcta/Msolar," [M_s]"
+      print *, "t_0 = ",timezero/year," [year]"
+      print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
+      print *, "Eth = ",Eth /foe     ," [10^51 erg]"
+      timezero = 100.0d0 * year
+      vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
+      rc   = vel1*timezero
+      print *, "Ejecta length [pc]",rc/pc
+      if(rc < x1a(is+5)-x1a(is) ) then
+         print *, "resolution is not enough reconsider the parameters"
+         print *, "5 mesh dr [pc]:",(x1a(is+5)-x1a(is))/pc
+         stop
+      endif
+      ! blast wave
+      rho1 = Mejcta/(4.0*pi/3.0d0*rc**3)
+      pre1 = Eth/(4.0*pi/3.0d0*rc**3)*(gam-1.0d0)  
+      
+      print *, "Inside shell"
+      print *, "rho= ",rho1/mu,"[1/cm^3]"
+      print *, "vel= ",vel1/1.0e5,"[km/s]"
+      print *, "pre= ",pre1   ,"[erg/cm^3]"
+         
+      ! interstellar  medium
+      rho2 = 1.0d0*mu ! Interstellar medium 1 [1/cm^3]
+      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
       vel2 = 0.0d0
-
-! blastwave
-      vol  = (4.0*pi/3.0d0*dr**3)-(4.0*pi/3.0d0*x1min**3) ! cm^3
-      rho1 = (Mejecta*Msolar)/vol ! g/cm^3
-      eexp = EexpThermal*(1.0d51) ! erg
-      pre1 = eexp/vol*(gam-1.0d0) ! erg/cm^3
-      vel1 = sqrt(EexpKinetic*1.0d51/vol/rho1) ! cm/s
-
-      write(6,*) "Eex= ",eexp/1.0d51,"[10^51 erg]"
-      write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
-      write(6,*) "vel= ",vel1   ,"[cm/s]"
-      write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
-     
+      print *, "Outside shell, rho(r) = rho_ism (constant)"
+      print *, "rho= ",rho2/mu,"[1/cm^3]"
+      
+      print *, "t_0= ",timezero/year
+      time = timezero
       d(:,:,:) = rho2
-  
+
       do k=ks,ke
       do j=js,je
       do i=is,ie
-         if(x1b(i) < dr)then
-             d(i,j,k) = max(rho1*(x1b(i)/dr)**(neu/(gam-1)),rho2)
-             p(i,j,k) = pre1
-            v1(i,j,k) = vel1*max(x1b(i)/dr,0.0d0)
+         if(x1b(i) < rc)then
+            d(i,j,k) = rho1
+            p(i,j,k) = pre1
+            v1(i,j,k) = vel1*max(x1b(i)/rc,0.0d0)
          else
-             d(i,j,k) = rho2
-             p(i,j,k) = pre2
+            d(i,j,k) = rho2
+            p(i,j,k) = pre2
             v1(i,j,k) = vel2
          endif
       enddo
@@ -369,7 +443,7 @@ end module eosmod
       enddo
       enddo
 
-      dt = Coul * dtmin
+      dt = Cour * dtmin
 !      write(6,*)"dt",dt
       return
       end subroutine TimestepControl
@@ -384,9 +458,10 @@ end module eosmod
       use eosmod
       implicit none
       integer::i,j,k
+      real(8):: pl,pr,vl,vr,cl,cr,shock
 
-!      do j=1,jn-1
 
+!$omp parallel do collapse(3)
       do k=ks,ke
       do j=js,je
       do i=1,in-1
@@ -415,7 +490,43 @@ end module eosmod
       enddo
       enddo
       enddo
+!$end omp parallel
 
+!$omp parallel do collapse(3) private(pl,pr,vl,vr,cl,cr,shock)
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+      ! initial      
+         wshock(i,j,k) = 0.0d0
+      ! x minus 
+         pl = svc(npre,i-1,j,k)
+         pr = svc(npre,i  ,j,k)
+         vl = svc(nve1,i-1,j,k)
+         vr = svc(nve1,i  ,j,k)
+         cl = svc(ncsp,i-1,j,k)
+         cr = svc(ncsp,i  ,j,k)
+         shock= dble(&
+              (max(pl,pr) / min(pl, pr) > 1.5d0) &
+        .and. ((vr - vl) < -0.125d0 * (cr+cl))   &
+              )
+         wshock(i,j,k) = max(wshock(i,j,k),shock)
+      ! x plus 
+         pl = svc(npre,i  ,j,k)
+         pr = svc(npre,i+1,j,k)
+         vl = svc(nve1,i  ,j,k)
+         vr = svc(nve1,i+1,j,k)
+         cl = svc(ncsp,i  ,j,k)
+         cr = svc(ncsp,i+1,j,k)
+         shock= dble(&
+              (max(pl,pr) / min(pl, pr) > 1.5d0) &
+        .and. ((vr - vl) < -0.125d0 * (cr+cl))   &
+              )
+         wshock(i,j,k) = max(wshock(i,j,k),shock)
+        
+      enddo
+      enddo
+      enddo
+!$end omp parallel
 
 
       return
@@ -496,18 +607,20 @@ end module eosmod
       implicit none
       integer::i,j,k
       real(8),dimension(nhyd):: dsvp,dsvm,dsvc,dsv
-      real(8),dimension(nhyd,in,jn,kn):: leftpr,rigtpr
-      real(8),dimension(2*mflx+madd,in,jn,kn):: leftco,rigtco
-      real(8),dimension(2*mflx+madd):: leftst,rigtst
-      real(8),dimension(mflx):: nflux
+      real(8),dimension(nhyd):: Pleftc1, Pleftc2, Plefte
+      real(8),dimension(nhyd):: Prigtc1, Prigtc2, Prigte
+      real(8),dimension(2*mflx+madd):: leftco,rigtco
+      real(8),dimension(mflx):: nfluxe,nfluxc
       real(8),dimension(in),save:: x1c,ctl,ctr
       real(8),dimension(in),save:: bck,frd,cf,cb
       real(8):: xii,cflo,cblo
+      real(8):: shock    
+      logical,save:: is_inited
+      data is_inited / .false. /
 !
 ! Mignone 2014 Ref. [1]
 !
-      logical,save:: is_inited
-      data is_inited / .false. /
+      if(.not. is_inited) then
       do i=is-mgn,ie+mgn
          xii = (x1a(i+1)-x1a(i))/x1b(i  )
 ! Eq. (C10) of Ref. [1]
@@ -525,101 +638,116 @@ end module eosmod
 ! Eq. (C12), (C13) of Ref. [1]
          cf(i) = (x1c(i+1)- x1c(i  ))/( x1a(i+1) -x1c(i  ))
          cb(i) = (x1c(i  )- x1c(i-1))/( x1c(i  ) -x1a(i  ))
-     enddo
-
-      k=ks
+      enddo
+      is_inited = .true.
+     endif
+     k=ks
+!$omp parallel do private(Pleftc1,Pleftc2,Plefte,Prigtc1,Prigtc2,Prigte,dsvp,dsvm,dsv,cflo,cblo,leftco,rigtco,nfluxe,nfluxc,shock)
       do j=js,je
-      do i=is-1,ie+1
-         dsvp(:) = (svc(:,i+1,j,k) -svc(:,i,j,k)                 )
-         dsvm(:) = (                svc(:,i,j,k) - svc(:,i-1,j,k))
+      do i=is,ie+1
+         Pleftc1(:) = svc(:,i-2,j,k)
+         Pleftc2(:) = svc(:,i-1,j,k)
+         Prigtc1(:) = svc(:,i  ,j,k)
+         Prigtc2(:) = svc(:,i+1,j,k)
+         
+! | Pleftc1   | Pleftc2 =>| Prigtc1   | Prigtc2   |        
+!                     You are here               
+!====================
+! Left
+!====================
+         dsvp(:) = Prigtc1(:) - Pleftc2(:) 
+         dsvm(:) =              Pleftc2(:) - Pleftc1(:)
+         
+         dsvp(:) = dsvp(:) * frd(i-1)
+         dsvm(:) = dsvm(:) * bck(i-1)
+         cflo = cf(i-1)
+         cblo = cb(i-1)
+         call vanLeer(dsvp,dsvm,cflo,cblo,dsv)
+         Plefte(:) = Pleftc2(:) + 0.5d0*dsv(:)*ctr(i-1)
 
+! Consvative variables
+         leftco(mudn)=Plefte(nden) ! rho
+         leftco(muvu)=Plefte(nve1)*Plefte(nden)   ! rho v_x
+         leftco(muvv)=Plefte(nve2)*Plefte(nden)   ! rho v_y
+         leftco(muvw)=Plefte(nve3)*Plefte(nden)   ! rho v_z
+         leftco(muet)=Plefte(nene)*Plefte(nden) & ! e_i
+     &               +0.5d0*Plefte(nden)*(                  &
+     &                     +Plefte(nve1)**2                 &
+     &                     +Plefte(nve2)**2                 &
+     &                     +Plefte(nve3)**2)                 ! + rho v^2/2
+
+! Flux
+         leftco(mfdn)=Plefte(nden)             *Plefte(nve1)
+         leftco(mfvu)=Plefte(nden)*Plefte(nve1)*Plefte(nve1)+Plefte(npre)
+         leftco(mfvv)=Plefte(nden)*Plefte(nve2)*Plefte(nve1)
+         leftco(mfvw)=Plefte(nden)*Plefte(nve3)*Plefte(nve1)
+         leftco(mfet)= (Plefte(nene)*Plefte(nden)  &
+              &         +0.5d0*Plefte(nden)*(   &
+     &                     +Plefte(nve1)**2  &
+     &                     +Plefte(nve2)**2  &
+     &                     +Plefte(nve3)**2) &
+     &                     +Plefte(npre) )*Plefte(nve1)
+         leftco(mcsp)= Plefte(ncsp)
+         leftco(mvel)= Plefte(nve1)
+         leftco(mpre)= Plefte(npre)
+
+! | Pleftc1   | Pleftc2 |<= Prigtc1   | Prigtc2   |        
+!                     You are here               
+!====================
+! Right
+!====================
+         dsvp = Prigtc2(:) - Prigtc1(:) 
+         dsvm =              Prigtc1(:) - Pleftc2(:)
          dsvp(:) = dsvp(:) * frd(i)
          dsvm(:) = dsvm(:) * bck(i)
          cflo = cf(i)
          cblo = cb(i)
          call vanLeer(dsvp,dsvm,cflo,cblo,dsv)
-!         call minmod(dsvp,dsvm,dsv)
-         leftpr(:,i+1,j,k) = svc(:,i,j,k) + 0.5d0*dsv(:)*ctr(i)
-         rigtpr(:,i  ,j,k) = svc(:,i,j,k) - 0.5d0*dsv(:)*ctl(i)
-      enddo
-      enddo
-
-      do j=js,je
-      do i=is,ie+1
-         leftco(mudn,i,j,k)=leftpr(nden,i,j,k) ! rho
-         leftco(muvu,i,j,k)=leftpr(nve1,i,j,k)*leftpr(nden,i,j,k)  ! rho v_x
-         leftco(muvv,i,j,k)=leftpr(nve2,i,j,k)*leftpr(nden,i,j,k)  ! rho v_y
-         leftco(muvw,i,j,k)=leftpr(nve3,i,j,k)*leftpr(nden,i,j,k)  ! rho v_z
-         leftco(muet,i,j,k)=leftpr(nene,i,j,k)*leftpr(nden,i,j,k) &! e_i+ rho v^2/2
-     &               +0.5d0*leftpr(nden,i,j,k)*(    &
-     &                     +leftpr(nve1,i,j,k)**2   &
-     &                     +leftpr(nve2,i,j,k)**2   &
-     &                     +leftpr(nve3,i,j,k)**2)
-
-         leftco(mfdn,i,j,k)=leftpr(nden,i,j,k)                   *leftpr(nve1,i,j,k)
-         leftco(mfvu,i,j,k)=leftpr(nden,i,j,k)*leftpr(nve1,i,j,k)*leftpr(nve1,i,j,k) &
-     &                     +leftpr(npre,i,j,k)
-         leftco(mfvv,i,j,k)=leftpr(nden,i,j,k)*leftpr(nve2,i,j,k)*leftpr(nve1,i,j,k)
-         leftco(mfvw,i,j,k)=leftpr(nden,i,j,k)*leftpr(nve3,i,j,k)*leftpr(nve1,i,j,k)
-         leftco(mfet,i,j,k)=(leftpr(nene,i,j,k)*leftpr(nden,i,j,k)  &
-     &               +0.5d0*leftpr(nden,i,j,k)*(   &
-     &                     +leftpr(nve1,i,j,k)**2  &
-     &                     +leftpr(nve2,i,j,k)**2  &
-     &                     +leftpr(nve3,i,j,k)**2) &
-     &                     +leftpr(npre,i,j,k)     &
-     &                       )                                  *leftpr(nve1,i,j,k) 
-
-         leftco(mcsp,i,j,k)= leftpr(ncsp,i,j,k)
-         leftco(mvel,i,j,k)= leftpr(nve1,i,j,k)
-         leftco(mpre,i,j,k)= leftpr(npre,i,j,k)
-
-
-         rigtco(mudn,i,j,k)=rigtpr(nden,i,j,k)
-         rigtco(muvu,i,j,k)=rigtpr(nve1,i,j,k)*rigtpr(nden,i,j,k)
-         rigtco(muvv,i,j,k)=rigtpr(nve2,i,j,k)*rigtpr(nden,i,j,k)
-         rigtco(muvw,i,j,k)=rigtpr(nve3,i,j,k)*rigtpr(nden,i,j,k)
-         rigtco(muet,i,j,k)=rigtpr(nene,i,j,k)*rigtpr(nden,i,j,k) &
-     &               +0.5d0*rigtpr(nden,i,j,k)*(  &
-     &                     +rigtpr(nve1,i,j,k)**2 &
-     &                     +rigtpr(nve2,i,j,k)**2 &
-     &                     +rigtpr(nve3,i,j,k)**2)
-
-         rigtco(mfdn,i,j,k)=rigtpr(nden,i,j,k)                   *rigtpr(nve1,i,j,k)
-         rigtco(mfvu,i,j,k)=rigtpr(nden,i,j,k)*rigtpr(nve1,i,j,k)*rigtpr(nve1,i,j,k) &
-     &                     +rigtpr(npre,i,j,k)
-         rigtco(mfvv,i,j,k)=rigtpr(nden,i,j,k)*rigtpr(nve2,i,j,k)*rigtpr(nve1,i,j,k)
-         rigtco(mfvw,i,j,k)=rigtpr(nden,i,j,k)*rigtpr(nve3,i,j,k)*rigtpr(nve1,i,j,k)
-         rigtco(mfet,i,j,k)=(rigtpr(nene,i,j,k)*rigtpr(nden,i,j,k) &
-     &               +0.5d0*rigtpr(nden,i,j,k)*(   &
-     &                     +rigtpr(nve1,i,j,k)**2  &
-     &                     +rigtpr(nve2,i,j,k)**2  &
-     &                     +rigtpr(nve3,i,j,k)**2) &
-     &                     +rigtpr(npre,i,j,k)     &
-     &                      )                                    *rigtpr(nve1,i,j,k)
-
-         rigtco(mcsp,i,j,k)= rigtpr(ncsp,i,j,k)
-         rigtco(mvel,i,j,k)= rigtpr(nve1,i,j,k)
-         rigtco(mpre,i,j,k)= rigtpr(npre,i,j,k)
+         Prigte(:) = Prigtc1(:) - 0.5d0*dsv(:)*ctl(i)
+         
+! Consvative variables
+         rigtco(mudn)=Prigte(nden) ! rho
+         rigtco(muvu)=Prigte(nve1)*Prigte(nden)   ! rho v_x
+         rigtco(muvv)=Prigte(nve2)*Prigte(nden)   ! rho v_y
+         rigtco(muvw)=Prigte(nve3)*Prigte(nden)   ! rho v_z
+         rigtco(muet)=Prigte(nene)*Prigte(nden) & ! e_i
+     &               +0.5d0*Prigte(nden)*(                  &
+     &                     +Prigte(nve1)**2                 &
+     &                     +Prigte(nve2)**2                 &
+     &                     +Prigte(nve3)**2)
+ 
+         rigtco(mfdn)=Prigte(nden)             *Prigte(nve1)
+         rigtco(mfvu)=Prigte(nden)*Prigte(nve1)*Prigte(nve1)+Prigte(npre)
+         rigtco(mfvv)=Prigte(nden)*Prigte(nve2)*Prigte(nve1)
+         rigtco(mfvw)=Prigte(nden)*Prigte(nve3)*Prigte(nve1)
+         rigtco(mfet)=(Prigte(nene)*Prigte(nden)  &
+              &         +0.5d0*Prigte(nden)*(   &
+     &                     +Prigte(nve1)**2  &
+     &                     +Prigte(nve2)**2  &
+     &                     +Prigte(nve3)**2) &
+     &                     +Prigte(npre) )*Prigte(nve1)
+         rigtco(mcsp)= Prigte(ncsp)
+         rigtco(mvel)= Prigte(nve1)
+         rigtco(mpre)= Prigte(npre)
+         !----------------------------
+         ! Shock 
+         !----------------------------
+         shock = max(wshock(i-1,j,k),wshock(i,j,k))
+         call HLLE(leftco,rigtco,nfluxe)
+         call HLLC(leftco,rigtco,nfluxc)
+         !shock = 1.0d0
+         nflux1(mden,i,j,k)=nfluxe(mden)*shock + (1.0d0-shock)*nfluxc(mden)
+         nflux1(mrv1,i,j,k)=nfluxe(mrvu)*shock + (1.0d0-shock)*nfluxc(mrvu)
+         nflux1(mrv2,i,j,k)=nfluxe(mrvv)*shock + (1.0d0-shock)*nfluxc(mrvv)
+         nflux1(mrv3,i,j,k)=nfluxe(mrvw)*shock + (1.0d0-shock)*nfluxc(mrvw)
+         nflux1(meto,i,j,k)=nfluxe(meto)*shock + (1.0d0-shock)*nfluxc(meto)
 
       enddo
       enddo
-
-      do j=js,je
-      do i=is,ie+1
-         leftst(:)=leftco(:,i,j,k)
-         rigtst(:)=rigtco(:,i,j,k)
-!         call HLLE(leftst,rigtst,nflux)
-         call HLLC(leftst,rigtst,nflux)
-         nflux1(mden,i,j,k)=nflux(mden)
-         nflux1(mrv1,i,j,k)=nflux(mrvu)
-         nflux1(mrv2,i,j,k)=nflux(mrvv)
-         nflux1(mrv3,i,j,k)=nflux(mrvw)
-         nflux1(meto,i,j,k)=nflux(meto)
-      enddo
-      enddo
-
+!$end omp parallel
       return
       end subroutine Numericalflux1
+
 
 !=======================================================================
 ! SUBROUTINE: HLLE
@@ -1017,7 +1145,9 @@ end module eosmod
       tout=time
 
       return
-      end subroutine Output
+    end subroutine Output
+
+   
 
 !=======================================================================
 ! SUBROUTINE: makedirs
