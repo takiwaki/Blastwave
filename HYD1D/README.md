@@ -4,7 +4,7 @@
 
 ## How to run and analyze
 
-In this task, your goal is to confirm the time evolution of a 1D supernova blast wave and understand how the shock propagates and decelerates.
+This document describe how to run the simulation and how to analyze the data you obtained by the simulations.
 
 ### login and go to work directory 
 First login the server, `w000.cfca.nao.ac.jp`.
