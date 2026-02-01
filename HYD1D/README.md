@@ -155,30 +155,20 @@ In `subroutine GenerateProblem`, you can find the following part.
 You can change the parameters as you like.
 
 <pre>
-      dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
-      write(6,*) "shell length [pc]",dr/pc
-
-! parameters
-      Mejecta = 10.0d0 ! M_sun
-      EexpThermal = 0.8 ! 10^51 erg
-      EexpKinetic = 0.2 ! 10^51 erg
-      RhoMedium   = 1.0 ! 1/cm^3
-      TMedium     = 1.0d4 ! 10^4 [K]
-! circum stellar  medium
-      rho2 = RhoMedium * mu ! Interstellar medium 1 [g/cm^3]
-      pre2 = rho2* kbol * Tmedium
-      vel2 = 0.0d0
-
-! blastwave
-      vol  = (4.0*pi/3.0d0*dr**3)-(4.0*pi/3.0d0*x1min**3) ! cm^3
-      rho1 = (Mejecta*Msolar)/vol ! g/cm^3
-      eexp = EexpThermal*(1.0d51) ! erg
-      pre1 = eexp/vol*(gam-1.0d0) ! erg/cm^3
-      vel1 = sqrt(EexpKinetic*1.0d51/vol/rho1) ! cm/s
-
-      write(6,*) "Eex= ",eexp/1.0d51,"[10^51 erg]"
-      write(6,*) "rho= ",rho1/mu,"[1/cm^3]"
-      write(6,*) "vel= ",vel1   ,"[cm/s]"
-      write(6,*) "pre= ",pre1   ,"[erg/cm^3]"
+      ! parameter
+      Mejcta = 5.0d0*Msolar
+      Eexp = 1.0*foe
+      frac = 0.5d0
+      Ekin = frac*Eexp
+      Eth  = (1.0d0-frac)*Eexp
+      timezero = 10.0d0 * year
+      nmedium = 1.0d0 !! interstellar medium [1/cm^3]
+      
+      print *, " Mej  = ",Mejcta/Msolar," [M_s]"
+      print *, " Eexp = ",Eexp/foe     ," [10^51 erg]"
+      print *, " Ekin = ",Ekin/foe     ," [10^51 erg]"
+      print *, " Eth  = ",Eth /foe     ," [10^51 erg]"
+      print *, " t_0  = ",timezero/year," [year]"
+      print *, "n_ism = ",nmedium      ," [1/cm^3]"
 </pre>
 After editing `Simulation.f90`, compile the code.
