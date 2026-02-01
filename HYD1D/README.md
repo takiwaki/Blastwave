@@ -4,7 +4,8 @@
 
 ## How to run and analyze
 
-This document describe how to run the simulation and how to analyze the data you obtained by the simulations.
+This manual describes how to run the simulation and how to analyze the data you obtained by the simulations.
+Following the proceadure, you will confirm that the simulation code runs correctly, and learn how to visualize the basic outputs of the 1D blast-wave simulation. You are NOT required to understand the details of the code or the physics at this stage.
 
 ### login and go to work directory 
 First login the server, `w000.cfca.nao.ac.jp`.
@@ -103,12 +104,14 @@ The movie files in saved in `movies/`. You can see the movie with the following 
     mplayer movies/ani???.mp4
 
 If 'mplayer' does not work, please copy the files to your local machine and open them there.
-### See energy conservation
+### See the time evolution
+Following command create time evolution of some variables. Confirm that the file is made.
 
-    make t-E.png
-    display t-E.png
+    make t-R.png
+    ls t-R.png
     
 ### Space Time Diagram
+Following command create space-time diagram. Confirm that the file is made.
 
     make t-r-rho.png
     display t-r-rho.png
