@@ -221,14 +221,10 @@ end module eosmod
       integer::i,j,k
       real(8):: pi
       ! paramters
-      real(8):: Eexp, Ekin, Eth,frac,Mejcta
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta,rhomedium
       real(8),parameter:: foe=1.0d51 !! fifty one erg
-      real(8):: timezero,rc,rism
+      real(8):: timezero,rc
       ! profile
-      integer:: rhoprof
-      integer,parameter:: constantism=1,powerlaw=2
-      ! profile
-      integer:: npower
       real(8):: rho1,rho2
       real(8):: pre1,pre2
       real(8):: vel1,vel2
@@ -241,19 +237,22 @@ end module eosmod
       real(8):: x,z
       pi =acos(-1.0d0)
 
-      ! paramter
+      ! parameter
+      Mejcta = 5.0d0*Msolar
       Eexp = 1.0*foe
       frac = 0.5d0
       Ekin = frac*Eexp
       Eth  = (1.0d0-frac)*Eexp
-      Mejcta = 5.0d0*Msolar
-      
-      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
-      print *, "Mej = ",Mejcta/Msolar," [M_s]"
-      print *, "t_0 = ",timezero/year," [year]"
-      print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
-      print *, "Eth = ",Eth /foe     ," [10^51 erg]"
       timezero = 10.0d0 * year
+      nmedium = 1.0d0 !! interstellar medium [1/cm^3]
+      
+      print *, " Mej  = ",Mejcta/Msolar," [M_s]"
+      print *, " Eexp = ",Eexp/foe     ," [10^51 erg]"
+      print *, " Ekin = ",Ekin/foe     ," [10^51 erg]"
+      print *, " Eth  = ",Eth /foe     ," [10^51 erg]"
+      print *, " t_0  = ",timezero/year," [year]"
+      print *, "n_ism = ",nmedium      ," [1/cm^3]"
+      
       vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
       rc   = vel1*timezero
       print *, "Ejecta length [pc]",rc/pc
@@ -272,7 +271,7 @@ end module eosmod
       print *, "pre= ",pre1   ,"[erg/cm^3]"
          
       ! interstellar  medium
-      rho2 = 1.0d0*mu ! Interstellar medium 1 [1/cm^3]
+      rho2 = rhomedium*mu ! Interstellar medium 1 [1/cm^3]
       pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
       vel2 = 0.0d0
       print *, "Outside shell, rho(r) = rho_ism (constant)"
