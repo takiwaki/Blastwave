@@ -48,7 +48,7 @@ def main():
     obs = calculate_radius_pc(obs)
 
     sim_name_files = [
-        [r"$M_{ejecta}=10\,M_\odot, E_{exp}=10^{51}\,erg$", "../HYD1D/analysis/t-prof.dat"]
+        [r"$M_{ejecta}=5\,M_\odot, E_{exp}=10^{51}\,erg$", "../HYD1D/analysis/t-prof.dat"]
     ]
 
     sim_list = read_simulation_curves(sim_name_files)
