@@ -13,12 +13,12 @@ First login the server, `w000.cfca.nao.ac.jp`.
     
 Then, go to work directory. Make it if that does not exist.
 
-    mkdir /cfca-work/<your account>
-    cd /cfca-work/<your account>
+    mkdir /mwork1/<your account>
+    cd /mwork1/<your account>
 
 Copy the programs. 
     
-    cp -r /cfca-work/dos04/Blastwave .
+    cp -r /mwork1/takiwkkz/Blastwave .
 
 Keep the original program as it is, so that you can always return to a clean reference model.
     
@@ -55,7 +55,7 @@ Open another terminal and go to analysis server, `an??.cfca.nao.ac.jp`. Here ?? 
 
 Then go to the work directory. Change `_model1` to the name you used.
     
-    cd /cfca-work/<your account>/Blastwave/HYD1D_model1/analysis
+    cd /mwork1/<your account>/Blastwave/HYD1D_model1/analysis
     make Analysis.x
     
 Now you have many time-snapshots of data. To count it, use a script.
