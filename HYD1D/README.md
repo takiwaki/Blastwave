@@ -2,14 +2,14 @@
 
 [Go to top](../README.md)  
 
-## How to run and analyse
+## How to run and analyze
 
-This is the instruction for spring school of division of science.
+In this task, your goal is to confirm the time evolution of a 1D supernova blast wave and understand how the shock propagates and decelerates.
 
 ### login and go to work directory 
-First login the server, `more.cfca.nao.ac.jp`.
+First login the server, `w000.cfca.nao.ac.jp`.
 
-    ssh <your account>@more.cfca.nao.ac.jp
+    ssh <your account>@w000.cfca.nao.ac.jp
     
 Then, go to work directory. Make it if that does not exist.
 
@@ -20,13 +20,13 @@ Copy the programs.
     
     cp -r /cfca-work/dos04/Blastwave .
 
-Keep the original program as it is.
+Keep the original program as it is, so that you can always return to a clean reference model.
     
     cd Blastwave/
     mv HYD1D HYD1D_original
    
 ### Making your model 
-Start the simulation by copying the original file. You can name the directory as you like. `_model1` is an example.
+Start the simulation by copying the original file. You can name the directory as you like. `_model1` is an example. It is recommended to include information about the model (e.g. density or energy) in the directory name.
     
     cp -r HYD1D_original HYD1D_model1
     cd HYD1D_model1
@@ -42,14 +42,14 @@ Then `Simulation.x`is made in this directory.
 ### run
 Let's run the code.
     
-    qsub pbs_more.sh
+    qsub pbs_pcc.sh
     
 The simulation data is saved in `bindata/`.
     
     ls bindata/
     
 ### analysis
-Open another terminal and go to analysis server, `an??.cfca.nao.ac.jp`. Here ?? is 09-14. To analyze the data, let us make `Analysis.x`.
+Open another terminal and go to analysis server, `an??.cfca.nao.ac.jp`. Here ?? is 09-14. You can choose any available server (e.g. an09–an14).To analyze the data, let us make `Analysis.x`.
     
     ssh <your account>@an??.cfca.nao.ac.jp
 
@@ -63,7 +63,7 @@ Now you have many time-snapshots of data. To count it, use a script.
     ./CountBindata.sh
    
 See the file, `cat control.dat`. You can know the number of files.
-Then preparation is done. Run the analyis.
+Now the preparation for analysis is done. Run the analysis program.
     
     ./Analysis.x
     
@@ -79,7 +79,8 @@ If you need 1D snapshots, use the following command. Using `output/onepro*.dat` 
     display figures/denone00050.png
     display figures/preone00050.png
     display figures/velone00050.png
-
+    
+If 'display' does not work, please copy the files to your local machine and open them there.
 Compare the figure with the following one.
 
     gnuplot
@@ -100,7 +101,8 @@ The movie files in saved in `movies/`. You can see the movie with the following 
 
     ls movies/
     mplayer movies/ani???.mp4
-   
+
+If 'mplayer' does not work, please copy the files to your local machine and open them there.
 ### See energy conservation
 
     make t-E.png
@@ -118,20 +120,20 @@ Compare the figure with the following one.
     gnuplot> set title "density"
     gnuplot> splot "t-r-pro.dat" u 1:2:3 w pm3d
     
-### Do all of them
+### Run all analysis steps at once
 To do all in one command, you just type `make` or `make all`.
    
       make all
       
-If you want th delete all the analysis, type `make allclean`
+If you want to delete all the analysis, type `make allclean`
 # How to change the parameters
-Let us try to change the parameters. Before change it. Confirm you are logining in `more.cfca.nao.ac.jp`.
+Let us try to change the parameters. Before doing so, confirm that you are logged in `w000.cfca.nao.ac.jp`.
 If you are still in the directory where `Simulation.x` exists, change the directory.
 
     cd ..
     ls
 
-You may find the following directries.
+You may find the following directories.
 
     HYD1D_original HYD1D_model1
     
@@ -150,7 +152,7 @@ Also you can change the timescale and simulation region.
       real(8),parameter:: x1min=0.0d0,x1max=10.0d0*pc
 </pre>
 In `subroutine GenerateProblem`, you can find the following part.
-You can change the paramters as you like.
+You can change the parameters as you like.
 
 <pre>
       dr = 8.0d0*(x1a(is+1)-x1a(is)) ! 8 mesh
