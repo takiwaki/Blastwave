@@ -35,7 +35,7 @@ Start the simulation by copying the original file. You can name the directory as
 ### compile 
 To run the code, you need to compile `Simulation.f90`.
     
-    module load intel/2022
+    module load intel/2024
     make Simulation.x
     
 Then `Simulation.x`is made in this directory.
