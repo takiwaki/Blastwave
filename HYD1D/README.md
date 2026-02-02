@@ -73,13 +73,13 @@ The output is saved in `output/`.
     ls output/
     
 ### 1D plots and animation.
-If you need 1D snapshots, use the following command. Using `output/onepro*.dat` (1DProfile), image files are made and save as `figures/*.png` (e.g., `denone00050.png`).
+If you need 1D snapshots, use the following command. Using `output/onepro*.dat` (1DProfile), image files are made and save as `figures/*.png` (e.g., `denone00010.png`).
     
-    gnuplot Plot1D.plt
+    gnuplot -e ifnum=10 Plot1D.plt
     ls figures/
-    display figures/denone00050.png
-    display figures/preone00050.png
-    display figures/velone00050.png
+    display figures/denone00010.png
+    display figures/preone00010.png
+    display figures/velone00010.png
     
 If 'display' does not work, please copy the files to your local machine and open them there.
 Compare the figure with the following one.
