@@ -182,8 +182,9 @@ We show a graphical summary of the data analysis pipe line.
 
 ```mermaid
 flowchart TD
-　classDef data fill:#f7eded,stroke:#8e2a2a
+　classDef data fill:#f7eded,stroke:#8e2a2a, stroke-width:1px
   classDef code fill:#ede7f6,stroke:#5e35b1
+  classDef bin fill:#f3f0f7,stroke:#7e57c2, stroke:none
   classDef build fill:#f3e5f5,stroke:#8e24aa
   classDef cmd fill:#fbe9e7,stroke:#b71c1c
   classDef result fill:#fff3e0,stroke:#fb8c00
@@ -194,19 +195,19 @@ flowchart TD
     A1[[Simulation.f90]]:::code
     A0 -- build rule --> A2
     A1 -- compiled into --> A2
-    A2[Simulation.x]:::code
+    A2[Simulation.x]:::bin
     A3["$ qsub pbs_pcc.sh"]:::cmd
     A2 -- invoked by --> A3
     A4[(bindata/bin?????.dat <br> bindata/unf?????.dat )]:::data
     A3 -- write --> A4
   end
-
+    style A stroke:none
   subgraph B["analysis/"]
     B0[[Makefile]]:::build
     B1[[Analysis.f90]]:::code
     B0 -- build rule --> B2
     B1 -- compiled into --> B2
-    B2[Analyis.x]:::code
+    B2[Analyis.x]:::bin
     B1-1[[CountBindata.sh]]
     A4 -- used by --> B1-1
     B1-1 -- write --> B1-2
@@ -216,6 +217,7 @@ flowchart TD
     B2 -- invoked by --> B3
     B1-2 -- used by --> B3
   end
+    style B stroke:none
 
   subgraph Rad["radial profile"]
     B4[(output/onepro?????.dat)]:::data
@@ -234,7 +236,7 @@ flowchart TD
     B19 -- write --> B20
     B20[(movies/ani***one.mp4)]:::result
    end
-    style Rad fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    style Rad fill:#f1f8e9,stroke:#558b2f, stroke:none
 
   subgraph TimeRad["space-time diagram"]
     B12[[MakeTimeRad.sh]]:::code
@@ -246,11 +248,11 @@ flowchart TD
     B15[[PlotTimeRad.plt]]:::code
     B16["$make t-r-rho.png <br>$ gnuplot PLotTimeRad.plt"]:::cmd
     B14 -- used by --> B16
-    B15 -- invoked by --> B16
+    B15 -- plot rule --> B16
     B17[(t-r-rho.png)]:::result
     B16 -- write --> B17
    end
-    style TimeRad fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    style TimeRad fill:#f1f8e9,stroke:#558b2f, stroke:none
 
   subgraph Time["time profile"]
     B5[(t-prof.dat)]:::data
@@ -262,7 +264,7 @@ flowchart TD
     B10 -- write --> B11
     B11[(t-#.png <br>  #= R, V, L, E)]:::result
    end
-    style Time fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    style Time fill:#f1f8e9,stroke:#558b2f, stroke:none
 
 
 ```
