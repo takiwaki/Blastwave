@@ -178,7 +178,7 @@ After editing `Simulation.f90`, compile the code.
 
 # Graphical Summary
 
-We show a graphical summary of the data analysis pipe line.
+We show a graphical summary of the data analysis pipeline.
 
 ```mermaid
 flowchart TD
