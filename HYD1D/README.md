@@ -175,3 +175,75 @@ You can change the parameters as you like.
       print *, "n_ism = ",nmedium      ," [1/cm^3]"
 </pre>
 After editing `Simulation.f90`, compile the code.
+
+# Graphical Summary
+
+We show a graphical summary of the data analysis pipe line.
+
+```mermaid
+flowchart TD
+  classDef data fill:#e3f2fd,stroke:#1e88e5
+  classDef code fill:#ede7f6,stroke:#5e35b1
+  classDef build fill:#f3e5f5,stroke:#8e24aa
+  classDef cmd  fill:#e8f5e9,stroke:#43a047
+  classDef result fill:#fff3e0,stroke:#fb8c00
+  classDef note fill:#fff,stroke:#9e9e9e,stroke-dasharray: 5 5,color:#616161
+
+  subgraph A["./"]
+    A0[[Makefile]]:::build
+    A1[[Simulation.f90]]:::code
+    A0 -- build rule --> A2
+    A1 -- compiled into --> A2
+    A2[Simulation.x]:::code
+    A3["$ qsub pbs_pcc.sh"]:::cmd
+    A2 -- invoked by --> A3
+    A4[(bindata/bin?????.dat <br> bindata/unf?????.dat )]:::data
+    A3 -- write --> A4
+  end
+
+  subgraph B["analysis/"]
+    B0[[Makefile]]:::build
+    B1[[Analysis.f90]]:::code
+    B0 -- build rule --> B2
+    B1 -- compiled into --> B2
+    B2[Analyis.x]:::code
+    B1-1[CountBindata.sh]
+    A4 -- used by --> B1-1
+    B1-1 -- write --> B1-2
+    B1-2[(count.dat)]:::data
+    A4 -- used by --> B2
+    B3["./Analysis.x"]:::cmd
+    B2 -- invoked by --> B3
+    B1-2 -- used by --> B3
+
+    B5[(t-prof.dat)]:::data
+    B3 -- write --> B5
+    B9[[PlotTime.plt]]:::code
+    B10["make t-R.png <br> gnuplot PlotTime.plt"]:::cmd
+    B9 -- plot rule --> B10
+    B5 -- used by --> B10
+    B10 -- write --> B11
+    B11[(t-#.png <br>  #= R, V, L, E)]:::result
+
+    B4[(output/onepro?????.dat)]:::data
+    B3 -- write --> B4
+    B6[[Plot1D.plt]]:::code
+    B6 -- plot rule --> B7
+    B7["gnuplot -e ifnum=?? Plot1D.plt"]:::cmd
+    B4 -- used by --> B7
+    B8[(figures/***one?????.png <br> *** = den, pre,vel)]:::result
+    B7 -- write --> B8
+
+    B12[[MakeTimeRad.sh]]:::code
+    B13["make t-r-pro.dat < br> ./MakeTimeRad.sh"]:::cmd
+    B4 -- used by --> B13
+    B12 -- invoked by --> B13
+    B14[(t-r-pro.dat)]:::data
+    B13 -- write --> B14
+    B15[[PlotTimeRad.plt]]:::code
+    B16["make t-r-rho.png < br> ./MakeTimeRad.sh"]:::cmd
+    B14 -- used by --> B16
+    B15 -- invoked by --> B16
+    
+  end
+```
