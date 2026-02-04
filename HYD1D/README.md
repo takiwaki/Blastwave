@@ -182,10 +182,10 @@ We show a graphical summary of the data analysis pipe line.
 
 ```mermaid
 flowchart TD
-  classDef data fill:#e3f2fd,stroke:#1e88e5
+　classDef data fill:#f7eded,stroke:#8e2a2a
   classDef code fill:#ede7f6,stroke:#5e35b1
   classDef build fill:#f3e5f5,stroke:#8e24aa
-  classDef cmd  fill:#e8f5e9,stroke:#43a047
+  classDef cmd fill:#fbe9e7,stroke:#b71c1c
   classDef result fill:#fff3e0,stroke:#fb8c00
   classDef note fill:#fff,stroke:#9e9e9e,stroke-dasharray: 5 5,color:#616161
 
@@ -207,43 +207,62 @@ flowchart TD
     B0 -- build rule --> B2
     B1 -- compiled into --> B2
     B2[Analyis.x]:::code
-    B1-1[CountBindata.sh]
+    B1-1[[CountBindata.sh]]
     A4 -- used by --> B1-1
     B1-1 -- write --> B1-2
     B1-2[(count.dat)]:::data
     A4 -- used by --> B2
-    B3["./Analysis.x"]:::cmd
+    B3["$ ./Analysis.x"]:::cmd
     B2 -- invoked by --> B3
     B1-2 -- used by --> B3
+  end
 
-    B5[(t-prof.dat)]:::data
-    B3 -- write --> B5
-    B9[[PlotTime.plt]]:::code
-    B10["make t-R.png <br> gnuplot PlotTime.plt"]:::cmd
-    B9 -- plot rule --> B10
-    B5 -- used by --> B10
-    B10 -- write --> B11
-    B11[(t-#.png <br>  #= R, V, L, E)]:::result
-
+  subgraph Rad["radial profile"]
     B4[(output/onepro?????.dat)]:::data
     B3 -- write --> B4
     B6[[Plot1D.plt]]:::code
     B6 -- plot rule --> B7
-    B7["gnuplot -e ifnum=?? Plot1D.plt"]:::cmd
+    B7["$ gnuplot -e ifnum=?? Plot1D.plt"]:::cmd
     B4 -- used by --> B7
     B8[(figures/***one?????.png <br> *** = den, pre,vel)]:::result
     B7 -- write --> B8
 
+    B18[[MakeMovie.sh]]:::code
+    B19["$ make movies <br>$ ./MakeMovie.sh ***one <br> *** = den, pre,vel"]:::cmd
+    B8 -- used by --> B19
+    B18 -- invoked by --> B19
+    B19 -- write --> B20
+    B20[(movies/ani***one.mp4)]:::result
+   end
+    style Rad fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+
+  subgraph TimeRad["space-time diagram"]
     B12[[MakeTimeRad.sh]]:::code
-    B13["make t-r-pro.dat < br> ./MakeTimeRad.sh"]:::cmd
+    B13["$ make t-r-pro.dat <br>$ ./MakeTimeRad.sh"]:::cmd
     B4 -- used by --> B13
     B12 -- invoked by --> B13
     B14[(t-r-pro.dat)]:::data
     B13 -- write --> B14
     B15[[PlotTimeRad.plt]]:::code
-    B16["make t-r-rho.png < br> ./MakeTimeRad.sh"]:::cmd
+    B16["$make t-r-rho.png <br>$ gnuplot PLotTimeRad.plt"]:::cmd
     B14 -- used by --> B16
     B15 -- invoked by --> B16
-    
-  end
+    B17[(t-r-rho.png)]:::result
+    B16 -- write --> B17
+   end
+    style TimeRad fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+
+  subgraph Time["time profile"]
+    B5[(t-prof.dat)]:::data
+    B3 -- write --> B5
+    B9[[PlotTime.plt]]:::code
+    B10["$make t-R.png <br>$ gnuplot PlotTime.plt"]:::cmd
+    B9 -- plot rule --> B10
+    B5 -- used by --> B10
+    B10 -- write --> B11
+    B11[(t-#.png <br>  #= R, V, L, E)]:::result
+   end
+    style Time fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+
+
 ```
