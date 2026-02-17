@@ -8,9 +8,9 @@ This manual describes how to run the simulation and how to analyze the data you 
 Following the proceadure, you will confirm that the simulation code runs correctly, and learn how to visualize the basic outputs of the 1D blast-wave simulation. You are NOT required to understand the details of the code or the physics at this stage.
 
 ### login and go to work directory 
-First login the server, `w000.cfca.nao.ac.jp`.
+First login the server, `m000.cfca.nao.ac.jp`.
 
-    ssh <your account>@w000.cfca.nao.ac.jp
+    ssh <your account>@m000.cfca.nao.ac.jp
     
 Then, go to work directory. Make it if that does not exist.
 
@@ -130,7 +130,7 @@ To do all in one command, you just type `make` or `make all`.
       
 If you want to delete all the analysis, type `make allclean`
 # How to change the parameters
-Let us try to change the parameters. Before doing so, confirm that you are logged in `w000.cfca.nao.ac.jp`.
+Let us try to change the parameters. Before doing so, confirm that you are logged in `m000.cfca.nao.ac.jp`.
 If you are still in the directory where `Simulation.x` exists, change the directory.
 
     cd ..
