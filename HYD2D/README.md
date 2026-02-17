@@ -18,7 +18,7 @@ Then, go to work directory. Make it if that does not exist.
 
 Copy the programs.　If you did not do it before. 
     
-    cp -r /mwork2/takiwkkz/Blastwave .
+    cp -r /mwork2/dos31/Blastwave .
 
 Keep the original program as it is, so that you can always return to a clean reference model.
     
