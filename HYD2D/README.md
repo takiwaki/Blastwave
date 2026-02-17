@@ -7,9 +7,9 @@
 This manual describes how to run the simulation and how to analyze the data you obtained by the simulations. Following the proceadure, you will confirm that the simulation code runs correctly, and learn how to visualize the basic outputs of the 1D blast-wave simulation. You are NOT required to understand the details of the code or the physics at this stage.
 
 ### login and go to work directory 
-First login the server, `w000.cfca.nao.ac.jp`.
+First login the server, `m000.cfca.nao.ac.jp`.
 
-    ssh <your account>@w000.cfca.nao.ac.jp
+    ssh <your account>@m000.cfca.nao.ac.jp
     
 Then, go to work directory. Make it if that does not exist.
 
