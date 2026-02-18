@@ -101,10 +101,89 @@ The movie files in saved in `movies/`. You can see the movie with the following 
 
     ls movies/
     mplayor movies/ani???.mp4
-    
+
+You can also use python scripts to make the figures and movies.
+```bash
+python Plot2Dbin.py
+```
 ### Run all analysis steps at once
 To do all in one command, you just type `make` or `make all`.
    
       make all
       
 If you want th delete all the analysis, type `make allclean`
+
+
+# Graphical Summary
+
+We show a graphical summary of the data analysis pipeline.
+
+```mermaid
+flowchart TD
+　classDef data fill:#f7eded,stroke:#8e2a2a, stroke-width:1px
+  classDef code fill:#ede7f6,stroke:#5e35b1
+  classDef bin fill:#f3f0f7,stroke:#7e57c2, stroke:none
+  classDef build fill:#f3e5f5,stroke:#8e24aa
+  classDef cmd fill:#fbe9e7,stroke:#b71c1c
+  classDef result fill:#fff3e0,stroke:#fb8c00
+  classDef note fill:#fff,stroke:#9e9e9e,stroke-dasharray: 5 5,color:#616161
+
+  subgraph A["./"]
+    A0[[Makefile]]:::build
+    A1[[Simulation.f90]]:::code
+    A0 -- build rule --> A2
+    A1 -- compiled into --> A2
+    A2[Simulation.x]:::bin
+    A3["$ qsub pbs_pcc.sh"]:::cmd
+    A2 -- invoked by --> A3
+    A4[(bindata/bin?????.dat <br> bindata/unf?????.dat )]:::data
+    A3 -- write --> A4
+  end
+    style A stroke:none
+  subgraph B["analysis/"]
+    B0[[Makefile]]:::build
+    B1[[Analysis.f90]]:::code
+    B0 -- build rule --> B2
+    B1 -- compiled into --> B2
+    B2[Analyis.x]:::bin
+    B1-1[[CountBindata.sh]]
+    A4 -- used by --> B1-1
+    B1-1 -- write --> B1-2
+    B1-2[(count.dat)]:::data
+    A4 -- used by --> B2
+    B3["$ ./Analysis.x"]:::cmd
+    B2 -- invoked by --> B3
+    B1-2 -- used by --> B3
+  end
+    style B stroke:none
+
+  subgraph 2D["2D profile"]
+    B4[(output/twopro?????.dat)]:::data
+    B3 -- write --> B4
+    B6[[Plot2D.plt]]:::code
+    B6 -- plot rule --> B7
+    B7["$ gnuplot -e ifnum=?? Plot2D.plt"]:::cmd
+    B4 -- used by --> B7
+    B8[(figures/***two?????.png <br> *** = den, pre,vel)]:::result
+    B7 -- write --> B8
+
+    B18[[MakeMovie.sh]]:::code
+    B19["$ make movies <br>$ ./MakeMovie.sh ***two <br> *** = den, pre,vel"]:::cmd
+    B8 -- used by --> B19
+    B18 -- invoked by --> B19
+    B19 -- write --> B20
+    B20[(movies/ani***two.mp4)]:::result
+
+    B21[[Plot2Dbin.py]]:::code
+    A4 -- used by --> B21
+    B21 -- write --> B8
+    B21 -- write --> B20
+
+   end
+    style 2D fill:#f1f8e9,stroke:#558b2f, stroke:none
+
+
+
+
+```
+
