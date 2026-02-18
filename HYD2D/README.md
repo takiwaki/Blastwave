@@ -174,7 +174,9 @@ flowchart TD
     B19 -- write --> B20
     B20[(movies/ani***two.mp4)]:::result
 
-    B21[[Plot2Dbin.py]]:::code
+    B22[[Plot2Dbin.py]]:::code
+    B22 -- executed by --> B21
+    B21["$ python Plot2Dbin.py"]:::cmd
     A4 -- used by --> B21
     B21 -- write --> B8
     B21 -- write --> B20
