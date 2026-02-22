@@ -221,9 +221,10 @@ end module eosmod
       integer::i,j,k
       real(8):: pi
       ! paramters
-      real(8):: Eexp, Ekin, Eth,frac,Mejcta,rhomedium
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta
       real(8),parameter:: foe=1.0d51 !! fifty one erg
       real(8):: timezero,rc
+      real(8):: nmedium
       ! profile
       real(8):: rho1,rho2
       real(8):: pre1,pre2
@@ -240,7 +241,7 @@ end module eosmod
       ! parameter
       Mejcta = 5.0d0*Msolar
       Eexp = 1.0*foe
-      frac = 0.5d0
+      frac = 0.8d0
       Ekin = frac*Eexp
       Eth  = (1.0d0-frac)*Eexp
       timezero = 10.0d0 * year
@@ -271,7 +272,7 @@ end module eosmod
       print *, "pre= ",pre1   ,"[erg/cm^3]"
          
       ! interstellar  medium
-      rho2 = rhomedium*mu ! Interstellar medium 1 [1/cm^3]
+      rho2 = nmedium*mu ! Interstellar medium 1 [1/cm^3]
       pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
       vel2 = 0.0d0
       print *, "Outside shell, rho(r) = rho_ism (constant)"
