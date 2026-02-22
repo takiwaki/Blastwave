@@ -54,6 +54,7 @@ def main():
     sim_list = read_simulation_curves(sim_name_files)
 
     plot_age_radius(obs, sim_list, outputfile="Age-Radius.png")
+    plot_age_velocity(obs, sim_list, outputfile="Age-Velocity.png")
 
 
 # -----------------------------
@@ -89,6 +90,8 @@ def read_obs_data(path: str) -> Dict[str, Any]:
             size_x: List[float] = []
             size_y: List[float] = []
             dist_kpc: List[float] = []
+            velo_kms: List[float] = []
+            temp_keV: List[float] = []
 
             for row in reader:
                 names.append((row.get("Name") or "").strip())
@@ -96,6 +99,8 @@ def read_obs_data(path: str) -> Dict[str, Any]:
                 size_x.append(_to_float(row.get("size x[arcmin]", "")))
                 size_y.append(_to_float(row.get("size y[arcmin]", "")))
                 dist_kpc.append(_to_float(row.get("Distance [kpc]", "")))
+                velo_kms.append(_to_float(row.get("Velocity [km/s]", "")))
+                temp_keV.append(_to_float(row.get("Temperture [keV]", "")))
 
     except OSError:
         print("cannot open " + path)
@@ -107,6 +112,8 @@ def read_obs_data(path: str) -> Dict[str, Any]:
         "size x[arcmin]": np.asarray(size_x, dtype=float),
         "size y[arcmin]": np.asarray(size_y, dtype=float),
         "Distance [kpc]": np.asarray(dist_kpc, dtype=float),
+        "Velocity [km/s]": np.asarray(velo_kms, dtype=float),
+        "Temperture [keV]": np.asarray(temp_keV, dtype=float),
     }
 
 
@@ -193,7 +200,41 @@ def plot_age_radius(obs: Dict[str, Any], sim_list: List[SimCurve], outputfile: s
     fig.tight_layout()
     fig.savefig(outputfile)
     print("saved:", outputfile)
+    
+def plot_age_velocity(obs: Dict[str, Any], sim_list: List[SimCurve], outputfile: str = "Age-Velocity.png"):
+    # Observation
+    x_obs = obs["age [kyr]"] * 1000.0  # year
+    y_obs = obs["Velocity [km/s]"]
+    labels = obs["Name"]
 
+    fig = plt.figure(figsize=(6.4, 5.2))
+    ax = fig.add_subplot(1, 1, 1)
+
+    # Observed points
+    ax.scatter(x_obs, y_obs, marker="o", color=cmap[1], label="Observed SNR")
+
+    # Labels for observed points (optional)
+    try:
+        from adjustText import adjust_text
+        texts = [plt.text(float(x_obs[i]), float(y_obs[i]), labels[i],
+                          ha="center", va="center") for i in range(len(labels))]
+        adjust_text(texts)
+    except Exception:
+        # adjustText not installed -> skip
+        pass
+
+    # Simulation curves
+    for curve in sim_list:
+        order = np.argsort(curve.t_year)  # sort by time in case the file is unsorted
+        ax.plot(curve.t_year[order], curve.Vshock[order], lw=2, label=curve.label)
+
+    ax.grid(color="lightgray")
+    ax.set_xlabel(r"Age [year]", fontsize=fsizeforlabel)
+    ax.set_ylabel(r"Velocity [km/s]", fontsize=fsizeforlabel)
+    ax.legend(fontsize=10, frameon=False)
+    fig.tight_layout()
+    fig.savefig(outputfile)
+    print("saved:", outputfile)
 
 if __name__ == "__main__":
     main()
