@@ -237,6 +237,7 @@
       real(8):: Eexp, Ekin, Eth,frac,Mejcta
       real(8),parameter:: foe=1.0d51 !! fifty one erg
       real(8):: timezero,rc,rism
+      real(8):: nmedium
       ! profile
       integer:: rhoprof
       integer,parameter:: constantism=1,powerlaw=2
@@ -255,18 +256,21 @@
       pi =acos(-1.0d0)
 
       ! paramter
+      Mejcta = 5.0d0*Msolar
       Eexp = 1.0*foe
-      frac = 0.5d0
+      frac = 0.8d0
       Ekin = frac*Eexp
       Eth  = (1.0d0-frac)*Eexp
-      Mejcta = 5.0d0*Msolar
+      timezero = 10.0d0 * year
+      nmedium = 1.0d0 !! interstellar medium [1/cm^3]
       
-      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
       print *, "Mej = ",Mejcta/Msolar," [M_s]"
-      print *, "t_0 = ",timezero/year," [year]"
+      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
       print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
       print *, "Eth = ",Eth /foe     ," [10^51 erg]"
-      timezero = 100.0d0 * year
+      print *, "t_0 = ",timezero/year," [year]"
+      print *, "n_ism = ",nmedium      ," [1/cm^3]"
+      
       vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
       rc   = vel1*timezero
       print *, "Ejecta length [pc]",rc/pc
@@ -285,13 +289,12 @@
       print *, "pre= ",pre1   ,"[erg/cm^3]"
          
       ! interstellar  medium
-      rho2 = 1.0d0*mu ! Interstellar medium 1 [1/cm^3]
+      rho2 = nmedium*mu ! Interstellar medium 1 [1/cm^3]
       pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
       vel2 = 0.0d0
       print *, "Outside shell, rho(r) = rho_ism (constant)"
       print *, "rho= ",rho2/mu,"[1/cm^3]"
       
-      print *, "t_0= ",timezero/year
       time = timezero
       d(:,:,:) = rho2
   
@@ -868,7 +871,7 @@
 
       enddo
       enddo
-!$end omp parallel
+!$omp end parallel do
       return
       end subroutine Numericalflux1
 

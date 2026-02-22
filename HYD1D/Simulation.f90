@@ -278,7 +278,6 @@ end module eosmod
       print *, "Outside shell, rho(r) = rho_ism (constant)"
       print *, "rho= ",rho2/mu,"[1/cm^3]"
       
-      print *, "t_0= ",timezero/year
       time = timezero
       d(:,:,:) = rho2
 
