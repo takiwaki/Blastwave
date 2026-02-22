@@ -6,29 +6,41 @@ from dataclasses import dataclass
 from typing import List, Dict, Any, Tuple
 
 import numpy as np
+
+
+# -----------------------------
+# Matplotlib style
+# -----------------------------
 import matplotlib.pyplot as plt
+fsizeforfig=14
+fsizeforlabel=16
+plt.rcParams.update({
+    # font
+    "font.family": "sans-serif",
+    "font.size": fsizeforfig,
+    "axes.labelsize": fsizeforlabel,
+    # ticks
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+    "xtick.top": True,
+    "ytick.right": True,
+    "xtick.minor.visible": True,
+    "ytick.minor.visible": True,
+
+    # line / axis
+    "lines.linewidth": 2.5,
+    "axes.linewidth": 1.5,
+    "xtick.major.width": 1.2,
+    "ytick.major.width": 1.2,
+    "xtick.minor.width": 1.0,
+    "ytick.minor.width": 1.0,
+})
+
 from cycler import cycler
-
-# -----------------------------
-# Matplotlib style (your settings)
-# -----------------------------
-fnameforfig = "sans-serif"
-fsizeforfig = 14
-fsizeforlabel = 16
-plt.rcParams["font.family"] = fnameforfig
-plt.rcParams["font.size"] = fsizeforfig
-plt.rcParams["xtick.direction"] = "in"
-plt.rcParams["ytick.direction"] = "in"
-plt.rcParams["xtick.minor.visible"] = True
-plt.rcParams["ytick.minor.visible"] = True
-plt.rcParams["xtick.top"] = True
-plt.rcParams["ytick.right"] = True
-
-cmapudc = cycler(color=["#ff2800", "#0041ff", "#35a16B", "#faf500", "#66ccff",
-                        "#ff99a0", "#ff9900", "#9a0079", "#663300"])
-plt.rcParams["axes.prop_cycle"] = cmapudc
-cmap = ["#ff2800", "#0041ff", "#35a16B", "#faf500", "#66ccff",
-        "#ff99a0", "#ff9900", "#9a0079", "#663300"]
+# red, blue, green, navy, sky-blue azure, pink, orange, purple, brown
+cmapudc =  cycler(color=["#ff2800","#0041ff" ,"#35a16B","#0072B2","#66ccff", "#ff99a0","#ff9900" ,"#9a0079", "#663300"])
+plt.rcParams['axes.prop_cycle'] = cmapudc
+cmap = ["#ff2800","#0041ff" ,"#35a16B","#0072B2","#66ccff", "#ff99a0","#ff9900" ,"#9a0079", "#663300"]
 
 
 @dataclass
@@ -55,6 +67,7 @@ def main():
 
     plot_age_radius(obs, sim_list, outputfile="Age-Radius.png")
     plot_age_velocity(obs, sim_list, outputfile="Age-Velocity.png")
+    #plot_age_temperture(obs, sim_list, outputfile="Age-Temperature.png")
 
 
 # -----------------------------
@@ -207,6 +220,11 @@ def plot_age_velocity(obs: Dict[str, Any], sim_list: List[SimCurve], outputfile:
     y_obs = obs["Velocity [km/s]"]
     labels = obs["Name"]
 
+    mask = np.isfinite(x_obs) & np.isfinite(y_obs)
+    x_obs = x_obs[mask]
+    y_obs = y_obs[mask]
+    labels = np.array(labels)[mask]
+    
     fig = plt.figure(figsize=(6.4, 5.2))
     ax = fig.add_subplot(1, 1, 1)
 
@@ -235,6 +253,47 @@ def plot_age_velocity(obs: Dict[str, Any], sim_list: List[SimCurve], outputfile:
     fig.tight_layout()
     fig.savefig(outputfile)
     print("saved:", outputfile)
+
+def plot_age_temperture(obs: Dict[str, Any], sim_list: List[SimCurve], outputfile: str = "Age-Velocity.png"):
+    # Observation
+    x_obs = obs["age [kyr]"] * 1000.0  # year
+    y_obs = obs["Temperture [keV]"]
+    labels = obs["Name"]
+
+    mask = np.isfinite(x_obs) & np.isfinite(y_obs)
+    x_obs = x_obs[mask]
+    y_obs = y_obs[mask]
+    labels = np.array(labels)[mask]
+    
+    fig = plt.figure(figsize=(6.4, 5.2))
+    ax = fig.add_subplot(1, 1, 1)
+
+    # Observed points
+    ax.scatter(x_obs, y_obs, marker="o", color=cmap[1], label="Observed SNR")
+
+    # Labels for observed points (optional)
+    try:
+        from adjustText import adjust_text
+        texts = [plt.text(float(x_obs[i]), float(y_obs[i]), labels[i],
+                          ha="center", va="center") for i in range(len(labels))]
+        adjust_text(texts)
+    except Exception:
+        # adjustText not installed -> skip
+        pass
+
+    # Simulation curves
+    for curve in sim_list:
+        order = np.argsort(curve.t_year)  # sort by time in case the file is unsorted
+        ax.plot(curve.t_year[order], curve.kTshock[order], lw=2, label=curve.label)
+
+    ax.grid(color="lightgray")
+    ax.set_xlabel(r"Age [year]", fontsize=fsizeforlabel)
+    ax.set_ylabel(r"Temperture [keV]", fontsize=fsizeforlabel)
+    ax.legend(fontsize=10, frameon=False)
+    fig.tight_layout()
+    fig.savefig(outputfile)
+    print("saved:", outputfile)
+
 
 if __name__ == "__main__":
     main()
