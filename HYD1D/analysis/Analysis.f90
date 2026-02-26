@@ -28,7 +28,7 @@ module fieldmod
     real(8):: gam,rho0,Eexp
 
     real(8):: rshock,Msw,kTshock,Vshock,Lbol
-
+    data rshock / 0.0d0 /
 end module fieldmod
 
 program data_analysis
@@ -50,9 +50,9 @@ program data_analysis
      write(6,*) "file index",incr
      call ReadData
      call EstimateEmissivity
-     call FindShockRadiusAnswer
+     call FindShockRadius
      call Visualize1D
-     call TimeProfleAnswer
+     call TimeProfle
   enddo FILENUMBER
 
   stop
@@ -119,46 +119,6 @@ subroutine ReadData
   
   return
 end subroutine ReadData
-subroutine EstimateEmissivity
-  use unitsmod
-  use fieldmod
-  implicit none
-  integer::i,j,k
-  logical:: is_inited
-  data is_inited / .false. /
-  if(.not. is_inited) then
-     allocate(Tem(in,jn,kn))
-     allocate(edot(in,jn,kn))
-     is_inited = .true.
-  endif
-  k=ks
-  j=js
-  do i =is,ie
-     ! p = n k T => T = p/(n)/k since kbol[J/K] kbol*1.0d5 [erg/K] 
-     Tem(i,j,k) = p(i,j,k)/(d(i,j,k)/mp) / (kbol*1.0d5) ! [K]
-     edot(i,j,k) = 1.4d-27 * (d(i,j,k)/mp)**2 *sqrt(Tem(i,j,k)) ! erg/s/cm^3
-  enddo
-end subroutine EstimateEmissivity
-  
-subroutine FindShockRadius
-  use unitsmod
-  use fieldmod
-  implicit none
-  integer::i,j,k
-  
-  k = ks
-  j = js 
-  do i=is,ie
-     ! find pressure max and set rshock, note x1b(i) is the radius
-     rshock = 0.0d0
-     ! use p = n T and set T_shock 
-     kTshock = 0.0d0! T [keV]
-     Vshock = 0.0d0 ! v [km/s]
-  enddo
-  !print *, "rshock=",rshock/pc,"[pc]"
-  
-end subroutine FindShockRadius
-
 
 subroutine Visualize1D
   use unitsmod
@@ -195,47 +155,6 @@ subroutine Visualize1D
   return
 end subroutine Visualize1D
 
-subroutine TimeProfle
-  use unitsmod
-  use fieldmod
-  implicit none
-  integer::i,j,k
-
-  character(20),parameter::dirname="output/"
-  character(40)::filename
-  integer::unittpr
-  real(8)::Etot,pi
-
-  logical,save:: is_inited
-  data is_inited / .false. /
-
-  if(.not. is_inited)then
-     call makedirs(dirname)
-  endif
-
-  pi = acos(-1.0d0)
-  Msw = 0.0d0
-  Etot=0.0d0
-  k=ks
-  j=js
-  do i=is,ie
-     ! add Msw if possible
-     Etot = Etot + (0.5d0*d(i,j,k)*v1(i,j,k)**2+ei(i,j,k))*dvl1a(i)*4.0d0*pi
-  enddo
-  !print *, "Msw=",Msw/Msolar,"[M_s]"
-  write(filename,'(a3,i5.5,a4)')"tpr",incr,".dat"
-  filename = trim(dirname)//filename
-  open(newunit=unittpr,file=filename,status='replace',form='formatted')
-  if(.not. is_inited) write(unittpr,'(1a,1x,A)') "#"," time[year] rshock[pc] Msw[Ms] kTshock[keV] Etot[erg]"
-
-  write(unittpr,'(1x,5(1x,E13.3))') time/year,rshock/pc,Msw/Msolar,kTshock,Etot
-  close(unittpr)
-  
-  is_inited = .true.
-
-  return
-end subroutine  TimeProfle
-
 subroutine makedirs(outdir)
   implicit none
   character(len=*), intent(in) :: outdir
@@ -249,14 +168,15 @@ end subroutine makedirs
 ! in the following
 !---------------------------
 
-
-subroutine FindShockRadiusAnswer
+subroutine FindShockRadius
   use unitsmod
   use fieldmod
   implicit none
   integer::i,j,k
   real(8):: pmax
-  
+  real(8):: rshockpre
+
+  if(rshock /= 0.0d0) rshockpre = rshock
   rshock = 0.0d0
   pmax = 0.0d0
   kTshock = 0.0d0
@@ -264,7 +184,7 @@ subroutine FindShockRadiusAnswer
   k = ks
   j = js 
   do i=is,ie
-     if(pmax < p(i,j,k)) then
+     if(pmax < p(i,j,k) .and. x1b(i) >= rshockpre ) then
         pmax = p(i,j,k)
         rshock = x1b(i)
         ! p = n T 
@@ -276,9 +196,30 @@ subroutine FindShockRadiusAnswer
   !print *, "kTshock=",kTshock,"[keV]"
   !print *, "Vshock=",Vshock,"[km/s]"
   
-end subroutine FindShockRadiusAnswer
+end subroutine FindShockRadius
 
-subroutine TimeProfleAnswer
+subroutine EstimateEmissivity
+  use unitsmod
+  use fieldmod
+  implicit none
+  integer::i,j,k
+  logical:: is_inited
+  data is_inited / .false. /
+  if(.not. is_inited) then
+     allocate(Tem(in,jn,kn))
+     allocate(edot(in,jn,kn))
+     is_inited = .true.
+  endif
+  k=ks
+  j=js
+  do i =is,ie
+     ! p = n k T => T = p/(n)/k since kbol[J/K] kbol*1.0d5 [erg/K] 
+     Tem(i,j,k) = p(i,j,k)/(d(i,j,k)/mp) / (kbol*1.0d5) ! [K]
+     edot(i,j,k) = 1.4d-27 * (d(i,j,k)/mp)**2 *sqrt(Tem(i,j,k)) ! erg/s/cm^3
+  enddo
+end subroutine EstimateEmissivity
+
+subroutine TimeProfle
   use unitsmod
   use fieldmod
   implicit none
@@ -320,4 +261,4 @@ subroutine TimeProfleAnswer
   is_inited = .true.
 
   return
-end subroutine  TimeProfleAnswer
+end subroutine  TimeProfle
