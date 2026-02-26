@@ -57,6 +57,7 @@ Open another terminal and go to analysis server, `an??.cfca.nao.ac.jp`. Here ?? 
 Then go to the work directory. Change `_model1` to the name you used.
     
     cd /mwork2/<your account>/Blastwave/HYD1D_model1/analysis
+    module load intel/ifort
     make Analysis.x
     
 Now you have many time-snapshots of data. To count it, use a script.
