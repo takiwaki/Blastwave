@@ -122,7 +122,7 @@ Compare the figure with the following one.
     gnuplot
     gnuplot> set view map
     gnuplot> set title "density"
-    gnuplot> splot "t-r-pro.dat" u 1:2:3 w pm3d
+    gnuplot> splot "t-r-pro.dat" u 1:2:(log($3)) w pm3d
     
 ### Run all analysis steps at once
 To do all in one command, you just type `make` or `make all`.
