@@ -28,10 +28,12 @@
       real(8),parameter:: Cour=0.25d0    !! CFL number (Courant factor) controlling stability (dt <= CFL * dx / wave_speed)
       
       real(8),parameter:: timemax=2.0d3*year !! Maximum physical time to evolve the simulation up to
+      !real(8),parameter:: timemax=1.0d2*year ! for sn1987a
       real(8),parameter:: dtout=timemax/200  !! Output interval: write snapshots every dtout seconds
 
       integer,parameter::izones=200 !! Number of active radial zones (excluding ghost zones)
       integer,parameter::jzones=100
+      !integer,parameter::jzones=400 !! for sn1987a
       integer,parameter::mgn=2      !! Number of ghost cells on each boundary
       integer,parameter::in=izones+2*mgn+1 &
      &                  ,jn=jzones+2*mgn+1 &
@@ -572,6 +574,16 @@
       enddo
       enddo
 
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         x = x1b(i)*sin(x2b(j))
+         z = x1b(i)*cos(x2b(j))
+         if( (x-2.5*pc)**2 + (z-0.5*pc)**2 < (1.0*pc)**2 ) d(i,j,k) = d(i,j,k) + 100.0d0*rho2
+      enddo
+      enddo
+      enddo
+
       select case(1)
          case(1)
       print *, rrv*100.0d0 &
@@ -726,7 +738,7 @@
          endif
       enddo
       enddo
-   enddo
+      enddo
    
       do k=ks,ke
       do j=js,je
@@ -802,7 +814,7 @@
       ! paramter
       Mejcta = 5.0d0*Msolar
       Eexp = 1.0*foe
-      frac = 0.8d0
+      frac = 0.5d0
       Ekin = frac*Eexp
       Eth  = (1.0d0-frac)*Eexp
       timezero = 10.0d0 * year
@@ -858,24 +870,59 @@
       enddo
       enddo
 
-      x1 =  1.5*pc
-      z1 =  3.0*pc
-      r1  = 0.5*pc
-
-      x2 =  1.5*pc
-      z2 = -3.0*pc
-      r2  = 0.5*pc
-      
       do k=ks,ke
       do j=js,je
       do i=is,ie
-
          x = x1b(i)*sin(x2b(j))
          z = x1b(i)*cos(x2b(j))
+         if( (x-0.08*pc)**2+(z       )**2 <= (0.02*pc)**2 ) d(i,j,k) = d(i,j,k) + 1.0d4*rho2
+         if( (x-0.4 *pc)**2+(z-0.4*pc)**2 <= (0.1 *pc)**2 ) d(i,j,k) = d(i,j,k) + 1.0d2*rho2
+         if( (x-0.4 *pc)**2+(z+0.4*pc)**2 <= (0.1 *pc)**2 ) d(i,j,k) = d(i,j,k) + 1.0d2*rho2
+      enddo
+      enddo
+      enddo
 
+      
+      select case(1)
+         case(1)
+      print *, rrv*100.0d0 &
+           & , "% of Randam Perturbation imposed on density"
+      seed(1) = 1
+      seed(2) = 1
+      call random_seed(PUT=seed(1:2))
+
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         call random_number(rnum)
+         if(x1b(i) > rc) d(i,j,k) = d(i,j,k)*(1.0d0 + rrv*(2.0d0*rnum(1)-1.0d0))
+      enddo
+      enddo
+     enddo
+
+      case(2)
+
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+          d(i,j,k) = d(i,j,k) + 3.0*rho2*exp(-((x1b(i)-3.0*pc)/(0.5*pc))**2)
       enddo
       enddo
       enddo
+      print *, rrv*100.0d0 &
+           & , "% of Perturbation imposed near the 3pc"
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) >= 2.5*pc .and. x1b(i) <= 3.5*pc )then
+            d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(20.0d0*x2b(j)      ) )
+            d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(12.0d0*x2b(j) +0.01) )
+            d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin( 8.0d0*x2b(j) +0.1 ) )
+         endif
+      enddo
+      enddo
+      enddo
+      end select
       
       eimin = 1.0d-5*pre2/(gam-1.0d0)
       
