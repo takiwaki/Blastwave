@@ -310,6 +310,10 @@
             p(i,j,k) = pre2
             v1(i,j,k) = vel2
          endif
+         if(x2b(j) < pi/30 .and. x1b(i) <rc)then
+             d(i,j,k) =        d(i,j,k)
+            v1(i,j,k) = 2.0d0*v1(i,j,k) 
+         endif
       enddo
       enddo
       enddo
@@ -326,7 +330,7 @@
       do j=js,je
       do i=is,ie
          call random_number(rnum)
-         if(x1b(i) > rc) d(i,j,k) = d(i,j,k)*(1.0d0 + rrv*(2.0d0*rnum(1)-1.0d0))
+         !if(x1b(i) > rc) d(i,j,k) = d(i,j,k)*(1.0d0 + rrv*(2.0d0*rnum(1)-1.0d0))
       enddo
       enddo
      enddo
@@ -371,7 +375,526 @@
 
       return
       end subroutine GenerateProblem
+!=====================    
+      subroutine GenerateProblem1 ! CasA
+      use commons
+      use eosmod
+      implicit none
+      integer::i,j,k
+      real(8):: pi
+      ! paramters
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta
+      real(8),parameter:: foe=1.0d51 !! fifty one erg
+      real(8):: timezero,rc,rism
+      real(8):: nmedium
+      ! profile
+      integer:: rhoprof
+      integer,parameter:: constantism=1,powerlaw=2
+      ! profile
+      integer:: npower
+      real(8):: rho1,rho2
+      real(8):: pre1,pre2
+      real(8):: vel1,vel2
+      real(8):: ein0
+      
+      integer,dimension(2) :: seed
+      real(8),dimension(1) :: rnum
+      real(8),parameter :: rrv =5.0d-2
+      
+      real(8):: x,z
+      pi =acos(-1.0d0)
 
+      ! paramter
+      Mejcta = 5.0d0*Msolar
+      Eexp = 1.0*foe
+      frac = 0.8d0
+      Ekin = frac*Eexp
+      Eth  = (1.0d0-frac)*Eexp
+      timezero = 10.0d0 * year
+      nmedium = 1.0d0 !! interstellar medium [1/cm^3]
+      
+      print *, "Mej = ",Mejcta/Msolar," [M_s]"
+      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
+      print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
+      print *, "Eth = ",Eth /foe     ," [10^51 erg]"
+      print *, "t_0 = ",timezero/year," [year]"
+      print *, "n_ism = ",nmedium      ," [1/cm^3]"
+      
+      vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
+      rc   = vel1*timezero
+      print *, "Ejecta length [pc]",rc/pc
+      if(rc < x1a(is+5)-x1a(is) ) then
+         print *, "resolution is not enough reconsider the parameters"
+         print *, "5 mesh dr [pc]:",(x1a(is+5)-x1a(is))/pc
+         stop
+      endif
+      ! blast wave
+      rho1 = Mejcta/(4.0*pi/3.0d0*rc**3)
+      pre1 = Eth/(4.0*pi/3.0d0*rc**3)*(gam-1.0d0)  
+      
+      print *, "Inside shell"
+      print *, "rho= ",rho1/mu,"[1/cm^3]"
+      print *, "vel= ",vel1/1.0e5,"[km/s]"
+      print *, "pre= ",pre1   ,"[erg/cm^3]"
+         
+      ! interstellar  medium
+      rho2 = nmedium*mu ! Interstellar medium 1 [1/cm^3]
+      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+      vel2 = 0.0d0
+      print *, "Outside shell, rho(r) = rho_ism (constant)"
+      print *, "rho= ",rho2/mu,"[1/cm^3]"
+      
+      time = timezero
+      d(:,:,:) = rho2
+  
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) < rc)then
+            d(i,j,k) = rho1
+            p(i,j,k) = pre1
+            v1(i,j,k) = vel1*max(x1b(i)/rc,0.0d0)
+         else
+            d(i,j,k) = rho2
+            p(i,j,k) = pre2
+            v1(i,j,k) = vel2
+         endif
+         if(x2b(j) < pi/30 .and. x1b(i) <rc)then
+             d(i,j,k) =        d(i,j,k)
+            v1(i,j,k) = 2.0d0*v1(i,j,k) 
+         endif
+      enddo
+      enddo
+      enddo
+
+      
+      eimin = 1.0d-5*pre2/(gam-1.0d0)
+      
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+          ei(i,j,k) = p(i,j,k)/(gam-1.0d0)
+          cs(i,j,k) = sqrt(gam*p(i,j,k)/d(i,j,k))
+      enddo
+      enddo
+      enddo
+      
+
+      call BoundaryCondition
+
+      return
+      end subroutine GenerateProblem1
+!============
+      subroutine GenerateProblem2 ! molecular cloud
+      use commons
+      use eosmod
+      implicit none
+      integer::i,j,k
+      real(8):: pi
+      ! paramters
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta
+      real(8),parameter:: foe=1.0d51 !! fifty one erg
+      real(8):: timezero,rc,rism
+      real(8):: nmedium
+      ! profile
+      integer:: rhoprof
+      integer,parameter:: constantism=1,powerlaw=2
+      ! profile
+      integer:: npower
+      real(8):: rho1,rho2
+      real(8):: pre1,pre2
+      real(8):: vel1,vel2
+      real(8):: ein0
+      
+      integer,dimension(2) :: seed
+      real(8),dimension(1) :: rnum
+      real(8),parameter :: rrv =5.0d-2
+      
+      real(8):: x,z
+      pi =acos(-1.0d0)
+
+      ! paramter
+      Mejcta = 5.0d0*Msolar
+      Eexp = 1.0*foe
+      frac = 0.8d0
+      Ekin = frac*Eexp
+      Eth  = (1.0d0-frac)*Eexp
+      timezero = 10.0d0 * year
+      nmedium = 1.0d0 !! interstellar medium [1/cm^3]
+      
+      print *, "Mej = ",Mejcta/Msolar," [M_s]"
+      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
+      print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
+      print *, "Eth = ",Eth /foe     ," [10^51 erg]"
+      print *, "t_0 = ",timezero/year," [year]"
+      print *, "n_ism = ",nmedium      ," [1/cm^3]"
+      
+      vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
+      rc   = vel1*timezero
+      print *, "Ejecta length [pc]",rc/pc
+      if(rc < x1a(is+5)-x1a(is) ) then
+         print *, "resolution is not enough reconsider the parameters"
+         print *, "5 mesh dr [pc]:",(x1a(is+5)-x1a(is))/pc
+         stop
+      endif
+      ! blast wave
+      rho1 = Mejcta/(4.0*pi/3.0d0*rc**3)
+      pre1 = Eth/(4.0*pi/3.0d0*rc**3)*(gam-1.0d0)  
+      
+      print *, "Inside shell"
+      print *, "rho= ",rho1/mu,"[1/cm^3]"
+      print *, "vel= ",vel1/1.0e5,"[km/s]"
+      print *, "pre= ",pre1   ,"[erg/cm^3]"
+         
+      ! interstellar  medium
+      rho2 = nmedium*mu ! Interstellar medium 1 [1/cm^3]
+      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+      vel2 = 0.0d0
+      print *, "Outside shell, rho(r) = rho_ism (constant)"
+      print *, "rho= ",rho2/mu,"[1/cm^3]"
+      
+      time = timezero
+      d(:,:,:) = rho2
+  
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) < rc)then
+            d(i,j,k) = rho1
+            p(i,j,k) = pre1
+            v1(i,j,k) = vel1*max(x1b(i)/rc,0.0d0)
+         else
+            d(i,j,k) = rho2
+            p(i,j,k) = pre2
+            v1(i,j,k) = vel2
+         endif
+      enddo
+      enddo
+      enddo
+
+      select case(1)
+         case(1)
+      print *, rrv*100.0d0 &
+           & , "% of Randam Perturbation imposed on density"
+      seed(1) = 1
+      seed(2) = 1
+      call random_seed(PUT=seed(1:2))
+
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         call random_number(rnum)
+         !if(x1b(i) > rc) d(i,j,k) = d(i,j,k)*(1.0d0 + rrv*(2.0d0*rnum(1)-1.0d0))
+      enddo
+      enddo
+     enddo
+
+      case(2)
+
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+          d(i,j,k) = d(i,j,k) + 3.0*rho2*exp(-((x1b(i)-3.0*pc)/(0.5*pc))**2)
+      enddo
+      enddo
+      enddo
+      print *, rrv*100.0d0 &
+           & , "% of Perturbation imposed near the 3pc"
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) >= 2.5*pc .and. x1b(i) <= 3.5*pc )then
+            d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(20.0d0*x2b(j)      ) )
+            d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin(12.0d0*x2b(j) +0.01) )
+            d(i,j,k)=d(i,j,k)*(1.0d0 + rrv*sin( 8.0d0*x2b(j) +0.1 ) )
+         endif
+      enddo
+      enddo
+      enddo
+      end select
+      
+      eimin = 1.0d-5*pre2/(gam-1.0d0)
+      
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+          ei(i,j,k) = p(i,j,k)/(gam-1.0d0)
+          cs(i,j,k) = sqrt(gam*p(i,j,k)/d(i,j,k))
+      enddo
+      enddo
+      enddo
+      
+
+      call BoundaryCondition
+
+      return
+      end subroutine GenerateProblem2
+      !=======
+      
+      subroutine GenerateProblem3
+      use commons
+      use eosmod
+      implicit none
+      integer::i,j,k
+      real(8):: pi
+      ! paramters
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta
+      real(8),parameter:: foe=1.0d51 !! fifty one erg
+      real(8):: timezero,rc,rism
+      real(8):: nmedium
+      ! profile
+      integer:: rhoprof
+      integer,parameter:: constantism=1,powerlaw=2
+      ! profile
+      integer:: npower
+      real(8):: rho1,rho2
+      real(8):: pre1,pre2
+      real(8):: vel1,vel2
+      real(8):: ein0
+      
+      integer,dimension(2) :: seed
+      real(8),dimension(1) :: rnum
+      real(8),parameter :: rrv =5.0d-2
+      
+      real(8):: x,z
+      pi =acos(-1.0d0)
+
+      ! paramter
+      Mejcta = 5.0d0*Msolar
+      Eexp = 1.0*foe
+      frac = 0.8d0
+      Ekin = frac*Eexp
+      Eth  = (1.0d0-frac)*Eexp
+      timezero = 10.0d0 * year
+      nmedium = 1.0d0 !! interstellar medium [1/cm^3]
+      
+      print *, "Mej = ",Mejcta/Msolar," [M_s]"
+      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
+      print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
+      print *, "Eth = ",Eth /foe     ," [10^51 erg]"
+      print *, "t_0 = ",timezero/year," [year]"
+      print *, "n_ism = ",nmedium      ," [1/cm^3]"
+      
+      vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
+      rc   = vel1*timezero
+      print *, "Ejecta length [pc]",rc/pc
+      if(rc < x1a(is+5)-x1a(is) ) then
+         print *, "resolution is not enough reconsider the parameters"
+         print *, "5 mesh dr [pc]:",(x1a(is+5)-x1a(is))/pc
+         stop
+      endif
+      ! blast wave
+      rho1 = Mejcta/(4.0*pi/3.0d0*rc**3)
+      pre1 = Eth/(4.0*pi/3.0d0*rc**3)*(gam-1.0d0)  
+      
+      print *, "Inside shell"
+      print *, "rho= ",rho1/mu,"[1/cm^3]"
+      print *, "vel= ",vel1/1.0e5,"[km/s]"
+      print *, "pre= ",pre1   ,"[erg/cm^3]"
+         
+      ! interstellar  medium
+      rho2 = nmedium*mu ! Interstellar medium 1 [1/cm^3]
+      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+      vel2 = 0.0d0
+      print *, "Outside shell, rho(r) = rho_ism (constant)"
+      print *, "rho= ",rho2/mu,"[1/cm^3]"
+      
+      time = timezero
+      d(:,:,:) = rho2
+  
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) < rc)then
+            d(i,j,k) = rho1
+            p(i,j,k) = pre1
+            v1(i,j,k) = vel1*max(x1b(i)/rc,0.0d0)
+         else
+            d(i,j,k) = rho2
+            p(i,j,k) = pre2
+            v1(i,j,k) = vel2
+         endif
+      enddo
+      enddo
+      enddo
+
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) > 5*pc .and. x1b(i) < 7*pc .and.x2b(j) < pi/2 )then
+	         d(i,j,k) = 300*rho2
+         endif
+      enddo
+      enddo
+   enddo
+   
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         x = x1b(i)*sin(x2b(j))
+         z = x1b(i)*cos(x2b(j))
+         if( (x-6*pc)**2+(z)**2 <= (1.0*pc)**2 )then
+             d(i,j,k) = 3000*rho2
+         endif
+      enddo
+      enddo
+      enddo
+
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) >= 2.5*pc .and. x1b(i) <= 3.5*pc )then
+            d(i,j,k)=d(i,j,k) + 10.0d0*rho2*abs(sin(10.0d0*x2b(j)))
+         endif
+      enddo
+      enddo
+      enddo
+      
+      eimin = 1.0d-5*pre2/(gam-1.0d0)
+      
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+          ei(i,j,k) = p(i,j,k)/(gam-1.0d0)
+          cs(i,j,k) = sqrt(gam*p(i,j,k)/d(i,j,k))
+      enddo
+      enddo
+      enddo
+      
+
+      call BoundaryCondition
+
+      return
+      end subroutine GenerateProblem3
+
+      !==============
+      subroutine GenerateProblem4
+      use commons
+      use eosmod
+      implicit none
+      integer::i,j,k
+      real(8):: pi
+      ! paramters
+      real(8):: Eexp, Ekin, Eth,frac,Mejcta
+      real(8),parameter:: foe=1.0d51 !! fifty one erg
+      real(8):: timezero,rc,rism
+      real(8):: nmedium
+      ! profile
+      integer:: rhoprof
+      integer,parameter:: constantism=1,powerlaw=2
+      ! profile
+      integer:: npower
+      real(8):: rho1,rho2
+      real(8):: pre1,pre2
+      real(8):: vel1,vel2
+      real(8):: ein0
+      
+      integer,dimension(2) :: seed
+      real(8),dimension(1) :: rnum
+      real(8),parameter :: rrv =5.0d-2
+      
+      real(8):: x,z
+      real(8):: x1,z1,r1
+      real(8):: x2,z2,r2
+      
+      pi =acos(-1.0d0)
+
+      ! paramter
+      Mejcta = 5.0d0*Msolar
+      Eexp = 1.0*foe
+      frac = 0.8d0
+      Ekin = frac*Eexp
+      Eth  = (1.0d0-frac)*Eexp
+      timezero = 10.0d0 * year
+      nmedium = 1.0d0 !! interstellar medium [1/cm^3]
+      
+      print *, "Mej = ",Mejcta/Msolar," [M_s]"
+      print *, "Eexp= ",Eexp/foe     ," [10^51 erg]"
+      print *, "Ekin= ",Ekin/foe     ," [10^51 erg]"
+      print *, "Eth = ",Eth /foe     ," [10^51 erg]"
+      print *, "t_0 = ",timezero/year," [year]"
+      print *, "n_ism = ",nmedium      ," [1/cm^3]"
+      
+      vel1 = sqrt(10.0d0/3.0d0*Ekin/Mejcta)
+      rc   = vel1*timezero
+      print *, "Ejecta length [pc]",rc/pc
+      if(rc < x1a(is+5)-x1a(is) ) then
+         print *, "resolution is not enough reconsider the parameters"
+         print *, "5 mesh dr [pc]:",(x1a(is+5)-x1a(is))/pc
+         stop
+      endif
+      ! blast wave
+      rho1 = Mejcta/(4.0*pi/3.0d0*rc**3)
+      pre1 = Eth/(4.0*pi/3.0d0*rc**3)*(gam-1.0d0)  
+      
+      print *, "Inside shell"
+      print *, "rho= ",rho1/mu,"[1/cm^3]"
+      print *, "vel= ",vel1/1.0e5,"[km/s]"
+      print *, "pre= ",pre1   ,"[erg/cm^3]"
+         
+      ! interstellar  medium
+      rho2 = nmedium*mu ! Interstellar medium 1 [1/cm^3]
+      pre2 = rho2* kbol *1.0d4 ! 10^4 [K]
+      vel2 = 0.0d0
+      print *, "Outside shell, rho(r) = rho_ism (constant)"
+      print *, "rho= ",rho2/mu,"[1/cm^3]"
+      
+      time = timezero
+      d(:,:,:) = rho2
+  
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+         if(x1b(i) < rc)then
+            d(i,j,k) = rho1
+            p(i,j,k) = pre1
+            v1(i,j,k) = vel1*max(x1b(i)/rc,0.0d0)
+         else
+            d(i,j,k) = rho2
+            p(i,j,k) = pre2
+            v1(i,j,k) = vel2
+         endif
+      enddo
+      enddo
+      enddo
+
+      x1 =  1.5*pc
+      z1 =  3.0*pc
+      r1  = 0.5*pc
+
+      x2 =  1.5*pc
+      z2 = -3.0*pc
+      r2  = 0.5*pc
+      
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+
+         x = x1b(i)*sin(x2b(j))
+         z = x1b(i)*cos(x2b(j))
+
+      enddo
+      enddo
+      enddo
+      
+      eimin = 1.0d-5*pre2/(gam-1.0d0)
+      
+      do k=ks,ke
+      do j=js,je
+      do i=is,ie
+          ei(i,j,k) = p(i,j,k)/(gam-1.0d0)
+          cs(i,j,k) = sqrt(gam*p(i,j,k)/d(i,j,k))
+      enddo
+      enddo
+      enddo
+      
+
+      call BoundaryCondition
+
+      return
+      end subroutine GenerateProblem4
+
+      
 !=======================================================================
 ! SUBROUTINE: BoundaryCondition
 ! Apply boundary conditions at inner/outer radial boundaries (ghost zones).
